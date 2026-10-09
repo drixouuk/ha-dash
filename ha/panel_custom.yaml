@@ -1,0 +1,37 @@
+# Panneau latéral pour le dashboard React.
+#
+# Bloc à recopier dans configuration.yaml de Home Assistant, puis à valider avec
+# « Outils de développement → Vérifier la configuration » avant redémarrage.
+# Déclaration équivalente vérifiée par l'API WebSocket `get_panels` :
+#
+#   "ha-dashboard": {
+#     "component_name": "custom",
+#     "title": "Dashboard",
+#     "url_path": "ha-dashboard",
+#     "show_in_sidebar": true,
+#     "config": { "_panel_custom": {
+#       "name": "ha-dashboard-panel",
+#       "module_url": "/local/dashboard/panel.js",
+#       "embed_iframe": false } } }
+#
+# Pourquoi `module_url` et pas `url` :
+#   `panel_custom` n'accepte que des webcomponents (`js_url` / `module_url`).
+#   L'option `url` n'existe pas dans le schéma de Home Assistant 2026.9, et
+#   l'intégration `panel_iframe` a été supprimée : utiliser l'une ou l'autre
+#   produit un avertissement de configuration.
+#
+# Le module `/local/dashboard/panel.js` (fichier `public/panel.js` du dépôt)
+# définit l'élément <ha-dashboard-panel>, qui encadre le dashboard dans une
+# iframe de même origine. Celle-ci isole le CSS et hérite de la session Home
+# Assistant : aucune reconnexion, aucun jeton à saisir.
+#
+# `embed_iframe: false` : l'iframe est créée par le module lui-même, inutile que
+# Home Assistant en ajoute une seconde couche.
+panel_custom:
+  - name: ha-dashboard-panel
+    sidebar_title: Dashboard
+    sidebar_icon: mdi:view-dashboard-variant
+    url_path: ha-dashboard
+    module_url: /local/dashboard/panel.js
+    embed_iframe: false
+    require_admin: false

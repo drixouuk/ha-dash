@@ -1,0 +1,23 @@
+# Dépendances
+node_modules/
+
+# Builds générés
+dist/
+dist-mock/
+
+# Secrets locaux : ne JAMAIS committer (jeton HA longue durée)
+.env
+.env.*
+!.env.example
+
+# Configuration personnelle de la maison (voir docs/ADAPTER.md) :
+# le dépôt ne contient que src/config.example.ts
+src/config.local.ts
+
+# Divers
+.DS_Store
+*.log
+.vite/
+
+# Captures Playwright régénérées par `npm run capture` (dossier de travail)
+docs/captures/auto/

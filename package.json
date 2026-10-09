@@ -1,0 +1,38 @@
+{
+  "name": "ha-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Dashboard React pour Home Assistant : ciel dynamique, chauffage, volets, climat, prières.",
+  "license": "MIT",
+  "author": "HA_DASH contributors",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:mock": "vite --mode mock",
+    "build": "tsc --noEmit && vite build",
+    "build:mock": "vite build --mode mock --outDir dist-mock",
+    "capture": "node scripts/capture.mjs",
+    "deploy": "./scripts/deploy.sh"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "5.3.0",
+    "@fontsource-variable/manrope": "5.3.0",
+    "home-assistant-js-websocket": "9.7.1",
+    "lucide-react": "1.52.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router-dom": "7.18.4"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "playwright-core": "1.63.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.2"
+  }
+}
