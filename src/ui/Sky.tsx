@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { usePrayers } from "./prayer";
-import { clamp, useNow } from "../util";
+import { clamp, useClock } from "../util";
 
 /**
  * Ciel de fond. La nuit est le fond de base (body::before). Trois calques (aube, jour, crépuscule)
@@ -55,10 +55,13 @@ function makeStars() {
 }
 
 export function Sky() {
-  const w = useSky(useNow(60_000));
+  // `wake` change à chaque réveil de l'écran : la clé recrée les calques, qui prennent la bonne teinte d'un coup
+  // (sans le fondu de 60 s, qui montrerait pendant une minute le ciel d'avant la veille).
+  const { now, wake } = useClock(60_000);
+  const w = useSky(now);
   const stars = useMemo(makeStars, []);
   return (
-    <div className="sky" aria-hidden="true">
+    <div className="sky" key={wake} aria-hidden="true">
       <svg className="sky-stars" style={{ opacity: w.night }} viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
         {stars.map((s, i) => (
           <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#f4efe6" opacity={s.o} />
