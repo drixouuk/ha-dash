@@ -64,6 +64,10 @@ function Stat({ i, max }: { i: number; max: number }) {
 
 export default function Heating() {
   const nest = useEnt(E.nest);
+  // Quand l'orchestration Home Assistant pilote la production, elle réécrit la consigne du
+  // Nest à chaque cycle : le cadran est alors grisé, plutôt que d'accepter un réglage aussitôt écrasé.
+  // `E.boilerControl` nomme l'interrupteur qui l'indique (voir docs/ADAPTER.md) ; absent, le cadran reste actif.
+  const pilotage = useEnt(E.boilerControl ?? "");
   const demand = useEnt(E.heatDemand);
   const rooms = useEnt(E.heatRooms);
   const solar = useEnt(E.solar);
@@ -93,7 +97,7 @@ export default function Heating() {
         <section className="card">
           <div className="row between"><h2 className="h2">Chaudière · Nest</h2><span className="badge"><Sun /> Solaire {solar?.on ? "possible" : "non"}</span></div>
           <div style={{ marginTop: 14 }}>
-            {nest ? <RoomDial room="Nest" climate={E.nest} color="#9085e9" /> : <div className="sub">Nest introuvable</div>}
+            {nest ? <RoomDial room="Nest" climate={E.nest} color="#9085e9" disabled={Boolean(pilotage?.on)} /> : <div className="sub">Nest introuvable</div>}
           </div>
         </section>
       </div>

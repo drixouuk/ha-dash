@@ -24,7 +24,7 @@ export function HvacModes({ climate }: { climate: string }) {
   );
 }
 
-export function RoomDial({ room, climate, color }: { room?: string; climate: string; color: string }) {
+export function RoomDial({ room, climate, color, disabled = false }: { room?: string; climate: string; color: string; disabled?: boolean }) {
   const c = useEnt(climate);
   const call = useCall();
   if (!c) return <div className="sub">Entité introuvable : {climate}</div>;
@@ -34,7 +34,7 @@ export function RoomDial({ room, climate, color }: { room?: string; climate: str
       label={`Consigne ${room ?? ""}`}
       value={Number(a.temperature ?? 19)} current={a.current_temperature != null ? Number(a.current_temperature) : null}
       min={Number(a.min_temp ?? 5)} max={Number(a.max_temp ?? 28)} step={Number(a.target_temp_step ?? 0.5)}
-      heating={a.hvac_action === "heating"} disabled={!c.ok || c.state === "off"} color={color}
+      heating={a.hvac_action === "heating"} disabled={disabled || !c.ok || c.state === "off"} color={color}
       onCommit={(v) => call("climate", "set_temperature", { temperature: v }, climate)}
     />
   );

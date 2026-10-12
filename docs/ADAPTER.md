@@ -34,6 +34,7 @@ there *and* the matching block in the page that uses it.
 | 5 | Covers (shutters, blinds) | `src/config.local.ts` → `COVERS` | replace / remove rows |
 | 6 | Heating, per room | `ROOMS[].climate`, `.heating`, `.setpoint`, `.statDay`, `.statWeek` | replace |
 | 7 | Boiler / main thermostat | `src/config.local.ts` → `E.nest` | replace |
+| 7b | Switch meaning "Home Assistant drives the boiler" | `E.boilerControl` (optional) | replace / remove |
 | 8 | Comfort setpoints (eco, frost-free) | `E.setpoints` | replace / remove rows |
 | 9 | House modes (away, holidays, boiler control) | `E.modes` | replace / remove rows |
 | 10 | Heat demand + rooms demanding heat | `E.heatDemand`, `E.heatRooms` | replace / remove |
@@ -96,6 +97,12 @@ thermostat (boiler) and three house modes:
 - `E.nest` — the boiler/main thermostat. **Replace** it with your own, or remove
   the boiler block in `src/pages/Heating.tsx` together with the field if you have
   only TRVs.
+- `E.boilerControl` — optional. The `input_boolean` that means "Home Assistant
+  drives the boiler" (the one your orchestration automation tests as a
+  condition). While it is on, the automation rewrites the boiler setpoint on
+  every cycle, so the dashboard greys out the boiler dial instead of accepting a
+  setting that would be overwritten immediately. Remove the field and the dial
+  stays active at all times.
 - `E.setpoints` — the two helper `input_number`s used for eco and frost-free
   temperatures. Replace the entity ids, or remove the rows.
 - `E.modes` — three `input_boolean`s (away, holidays, boiler control). Their

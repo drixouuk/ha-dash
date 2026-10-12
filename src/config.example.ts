@@ -48,6 +48,13 @@ export type MaisonConfig = {
     prayers: readonly PrayerSlot[];
     /** Thermostat de la chaudière (orchestration), distinct des thermostats de pièce. */
     nest: string;
+    /**
+     * Interrupteur (`input_boolean`) qui indique que Home Assistant pilote la
+     * production : quand il est actif, la consigne du thermostat principal est
+     * réécrite à chaque cycle, donc son cadran est grisé dans le dashboard.
+     * Facultatif : sans ce champ, le cadran reste toujours actif.
+     */
+    boilerControl?: string;
     setpoints: readonly { entity: string; name: string }[];
     modes: readonly { entity: string; name: string; hint: string }[];
     heatDemand: string;
@@ -117,6 +124,7 @@ export const CONFIG: MaisonConfig = {
       { key: "isha", label: "Isha", adhan: "sensor.isha_prayer", iqamah: "sensor.iqamah_isha" },
     ],
     nest: "climate.thermostat_principal",
+    boilerControl: "input_boolean.pilotage_chaudiere",
     setpoints: [
       { entity: "input_number.consigne_eco", name: "Éco" },
       { entity: "input_number.consigne_hors_gel", name: "Hors-gel" },
