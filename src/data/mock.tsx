@@ -1,6 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { COVERS, E, OUTSIDE, ROOMS } from "@config";
-import { toEnt, type Call, type Ent, type Point } from "./types";
+import { toEnt, type Call, type Ent, type Liaison, type Point } from "./types";
 
 /**
  * Mode démo : mêmes hooks que real.tsx, mais sur des données simulées (sert aux
@@ -115,13 +115,21 @@ export function useEnt(id: string): Ent | null {
   return useSyncExternalStore(subscribe, () => get(id));
 }
 
+/** Le mode démonstration ne se déconnecte jamais : l'indicateur de liaison reste muet. */
+export function useLiaison(): Liaison {
+  return "connecte";
+}
+
 const timers = new Map<string, number>();
 function moveCover(id: string, to: number) {
   clearInterval(timers.get(id));
   const step = () => {
     const cur = Number(store[id].attrs.current_position ?? 0);
     const next = cur + Math.sign(to - cur) * Math.min(5, Math.abs(to - cur));
-    patch(id, next === 0 ? "closed" : "open", { current_position: next });
+    // Pendant le mouvement, l'état reflète ce que Home Assistant annonce
+    // (« opening » / « closing ») : le dashboard peut ainsi l'afficher.
+    const bouge = next !== to;
+    patch(id, bouge ? (to > cur ? "opening" : "closing") : next === 0 ? "closed" : "open", { current_position: next });
     if (next === to) clearInterval(timers.get(id));
   };
   timers.set(id, window.setInterval(step, 60));

@@ -56,7 +56,12 @@ export type MaisonConfig = {
      */
     boilerControl?: string;
     setpoints: readonly { entity: string; name: string }[];
-    modes: readonly { entity: string; name: string; hint: string }[];
+    /**
+     * Interrupteurs de mode de la maison. `banner: true` les fait apparaître en
+     * bandeau sur l'accueil quand ils sont actifs (absence, vacances…), ce qui
+     * évite de deviner lesquels méritent d'être visibles.
+     */
+    modes: readonly { entity: string; name: string; hint: string; banner?: boolean }[];
     heatDemand: string;
     heatRooms: string;
     solar: string;
@@ -130,8 +135,8 @@ export const CONFIG: MaisonConfig = {
       { entity: "input_number.consigne_hors_gel", name: "Hors-gel" },
     ],
     modes: [
-      { entity: "input_boolean.chauffage_absence", name: "Absence", hint: "Passe en éco" },
-      { entity: "input_boolean.chauffage_vacances", name: "Vacances", hint: "Hors-gel" },
+      { entity: "input_boolean.chauffage_absence", name: "Absence", hint: "Passe en éco", banner: true },
+      { entity: "input_boolean.chauffage_vacances", name: "Vacances", hint: "Hors-gel", banner: true },
       { entity: "input_boolean.pilotage_chaudiere", name: "Pilotage chaudière", hint: "Home Assistant commande la chaudière" },
     ],
     heatDemand: "binary_sensor.demande_chauffe",

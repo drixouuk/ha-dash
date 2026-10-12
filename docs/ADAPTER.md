@@ -36,8 +36,7 @@ there *and* the matching block in the page that uses it.
 | 7 | Boiler / main thermostat | `src/config.local.ts` → `E.nest` | replace |
 | 7b | Switch meaning "Home Assistant drives the boiler" | `E.boilerControl` (optional) | replace / remove |
 | 8 | Comfort setpoints (eco, frost-free) | `E.setpoints` | replace / remove rows |
-| 9 | House modes (away, holidays, boiler control) | `E.modes` | replace / remove rows |
-| 10 | Heat demand + rooms demanding heat | `E.heatDemand`, `E.heatRooms` | replace / remove |
+| 9 | House modes (away, holidays, boiler control) | `E.modes` | replace / remove rows || 10 | Heat demand + rooms demanding heat | `E.heatDemand`, `E.heatRooms` | replace / remove |
 | 11 | Solar gain indicator | `E.solar` | replace / remove |
 | 12 | A light (kitchen/entrance card) | `E.light` | replace / remove |
 | 13 | Plant sensors (light + soil) | `E.plant` | replace / remove |
@@ -107,6 +106,8 @@ thermostat (boiler) and three house modes:
   temperatures. Replace the entity ids, or remove the rows.
 - `E.modes` — three `input_boolean`s (away, holidays, boiler control). Their
   labels and hints are free text: rename them to match your own automations.
+  Add `banner: true` to the ones that should appear as a banner on the home page
+  while they are on (typically away and holidays) — leave it out for the others.
 - `E.heatDemand` / `E.heatRooms` — informational sensors ("is the boiler being
   asked to heat", "how many rooms are asking"). Set them to your own sensors or
   remove the fields and the cards that show them.

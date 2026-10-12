@@ -19,7 +19,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { toEnt, type Call, type Ent, type Point } from "./types";
+import { toEnt, type Call, type Ent, type Liaison, type Point } from "./types";
 
 /* ------------------------------------------------------------------ réglages */
 
@@ -144,6 +144,16 @@ const ContexteConnexion = createContext<EtatConnexion>({ conn: null, statut: "co
 
 /** Connexion et état de connexion, pour les hooks de ce module. */
 const useConnexion = () => useContext(ContexteConnexion);
+
+/**
+ * État de la liaison, pour l'indicateur de l'interface. La reconnexion est gérée
+ * par la librairie : on se contente de la rendre visible, puisque les valeurs
+ * affichées pendant une coupure sont celles d'avant.
+ */
+export function useLiaison(): Liaison {
+  const { statut } = useConnexion();
+  return statut === "connecte" ? "connecte" : statut === "erreur" ? "erreur" : "reconnexion";
+}
 
 /**
  * Ouvre la connexion et n'affiche les enfants qu'une fois celle-ci établie

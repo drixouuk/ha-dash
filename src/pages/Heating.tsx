@@ -1,7 +1,7 @@
-import { Flame, Minus, Plus, Sun } from "lucide-react";
+import { AlertTriangle, Flame, Minus, Plus, Sun } from "lucide-react";
 import { useCall, useEnt, useHist } from "@data";
 import { E, ROOMS } from "@config";
-import { n1 } from "../util";
+import { dureeEtatFinal, fmtDuration, n1 } from "../util";
 import { HvacModes, RoomDial } from "../ui/RoomSheet";
 import { Timeline } from "../ui/Charts";
 
@@ -74,6 +74,13 @@ export default function Heating() {
   const w = ROOMS.map((r) => useEnt(r.statWeek)); // eslint-disable-line react-hooks/rules-of-hooks
   const maxW = Math.max(10, ...w.map((e) => e?.num ?? 0));
   const hist = useHist(ROOMS.map((r) => r.heating), 24);
+  // Bandeau « la chaudière ne suit pas » : même diagnostic que l'automatisation
+  // côté Home Assistant — une pièce demande de la chaleur depuis 30 minutes alors
+  // que le thermostat principal reste au repos.
+  const demandeHist = useHist([E.heatDemand], 1);
+  const demandeDepuis = demand?.on ? dureeEtatFinal(demandeHist[E.heatDemand], "on") : 0;
+  const chaudiereMuette =
+    demand?.on === true && nest?.attrs.hvac_action === "idle" && demandeDepuis >= 30 * 60_000;
 
   return (
     <>
@@ -81,6 +88,17 @@ export default function Heating() {
         <div><div className="eyebrow">Le Nest produit · les têtes demandent · HA orchestre</div><h1 className="h1">Chauffage</h1></div>
         {demand?.on ? <span className="badge heat" style={{ fontSize: 14, padding: "8px 14px" }}><Flame /> Chaudière en demande · {rooms?.state ?? 0} pièce(s)</span> : <span className="badge" style={{ fontSize: 14, padding: "8px 14px" }}>Chaudière au repos</span>}
       </header>
+
+      {chaudiereMuette && (
+        <div className="alert section" role="status">
+          <AlertTriangle />
+          <span>
+            La chaudière ne suit pas : une pièce demande de la chaleur depuis {fmtDuration(demandeDepuis)} et le
+            thermostat principal est au repos. Causes possibles : mode éco, ou consigne écrasée par le programme du
+            thermostat.
+          </span>
+        </div>
+      )}
 
       <div className="grid cols-3">
         {ROOMS.map((_, i) => <RoomHeat key={i} i={i} />)}
@@ -95,9 +113,15 @@ export default function Heating() {
           {E.setpoints.map((s) => <Stepper key={s.entity} entity={s.entity} name={s.name} />)}
         </section>
         <section className="card">
-          <div className="row between"><h2 className="h2">Chaudière · Nest</h2><span className="badge"><Sun /> Solaire {solar?.on ? "possible" : "non"}</span></div>
+          <div className="row between">
+            <h2 className="h2">Chaudière · Nest</h2>
+            <div className="row wrap" style={{ gap: 8 }}>
+              {pilotage?.on && <span className="badge warn">Piloté par HA</span>}
+              <span className="badge"><Sun /> Solaire {solar?.on ? "possible" : "non"}</span>
+            </div>
+          </div>
           <div style={{ marginTop: 14 }}>
-            {nest ? <RoomDial room="Nest" climate={E.nest} color="#9085e9" disabled={Boolean(pilotage?.on)} /> : <div className="sub">Nest introuvable</div>}
+            {nest ? <RoomDial room="Nest" climate={E.nest} color="#9085e9" disabled={Boolean(pilotage?.on)} disabledReason="Piloté par Home Assistant" /> : <div className="sub">Nest introuvable</div>}
           </div>
         </section>
       </div>

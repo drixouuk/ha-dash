@@ -21,6 +21,12 @@ export function Shutter({ id, name, compact = false }: { id: string; name: strin
   const pos = Number(ent.attrs.current_position ?? (ent.state === "open" ? 100 : 0));
   const shown = draft ?? pos;
   const closed = 100 - shown;
+  // Home Assistant annonce le mouvement (« opening » / « closing ») : on le dit,
+  // sinon la position affichée semble figée pendant la course du volet.
+  const mouvement =
+    ent.state === "opening" || ent.attrs.is_opening ? "Ouverture…"
+      : ent.state === "closing" || ent.attrs.is_closing ? "Fermeture…"
+        : null;
 
   const fromEvent = (e: React.PointerEvent) => {
     const r = box.current!.getBoundingClientRect();
@@ -32,8 +38,8 @@ export function Shutter({ id, name, compact = false }: { id: string; name: strin
     <div className="stack" style={{ gap: 10 }}>
       <div className="row between">
         <b>{name}</b>
-        <span className="sub" style={{ fontSize: 13, fontWeight: 700 }}>
-          {shown === 100 ? "Ouvert" : shown === 0 ? "Fermé" : `Ouvert à ${shown} %`}
+        <span className={`sub${mouvement ? " pulse" : ""}`} style={{ fontSize: 13, fontWeight: 700 }}>
+          {mouvement ?? (shown === 100 ? "Ouvert" : shown === 0 ? "Fermé" : `Ouvert à ${shown} %`)}
         </span>
       </div>
       <div

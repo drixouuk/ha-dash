@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { Point } from "./data/types";
 
 /**
  * Heure courante, rafraîchie à intervalle régulier **et dès le réveil**.
@@ -65,6 +66,19 @@ export function fmtDuration(ms: number): string {
   const m = min % 60;
   if (h === 0) return `${m} min`;
   return `${h} h ${String(m).padStart(2, "0")}`;
+}
+
+/**
+ * Durée pendant laquelle une série d'historique se **termine** sur la valeur
+ * donnée (0 si elle ne se termine pas dessus) : sert à dire « une pièce demande
+ * de la chaleur depuis 32 min » à partir de l'historique WebSocket.
+ */
+export function dureeEtatFinal(points: Point[] | undefined, valeur: string, maintenant = Date.now()): number {
+  if (!points?.length) return 0;
+  let i = points.length - 1;
+  if (points[i].s !== valeur) return 0;
+  while (i > 0 && points[i - 1].s === valeur) i--;
+  return Math.max(0, maintenant - points[i].t);
 }
 
 export const n1 = (v: number | null | undefined, d = 1) =>

@@ -24,17 +24,20 @@ export function HvacModes({ climate }: { climate: string }) {
   );
 }
 
-export function RoomDial({ room, climate, color, disabled = false }: { room?: string; climate: string; color: string; disabled?: boolean }) {
+export function RoomDial({ room, climate, color, disabled = false, disabledReason }: { room?: string; climate: string; color: string; disabled?: boolean; disabledReason?: string }) {
   const c = useEnt(climate);
   const call = useCall();
   if (!c) return <div className="sub">Entité introuvable : {climate}</div>;
   const a = c.attrs;
+  // Pourquoi le cadran est inerte : l'entité muette prime, puis le pilotage par
+  // Home Assistant, puis le thermostat éteint.
+  const raison = !c.ok ? "Entité indisponible" : disabled ? (disabledReason ?? "Réglage verrouillé") : c.state === "off" ? "Thermostat éteint" : undefined;
   return (
     <Dial
       label={`Consigne ${room ?? ""}`}
       value={Number(a.temperature ?? 19)} current={a.current_temperature != null ? Number(a.current_temperature) : null}
       min={Number(a.min_temp ?? 5)} max={Number(a.max_temp ?? 28)} step={Number(a.target_temp_step ?? 0.5)}
-      heating={a.hvac_action === "heating"} disabled={disabled || !c.ok || c.state === "off"} color={color}
+      heating={a.hvac_action === "heating"} disabled={disabled || !c.ok || c.state === "off"} disabledReason={raison} color={color}
       onCommit={(v) => call("climate", "set_temperature", { temperature: v }, climate)}
     />
   );

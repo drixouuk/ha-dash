@@ -24,13 +24,15 @@ type Props = {
   step?: number;
   heating?: boolean;
   disabled?: boolean;
+  /** Pourquoi le cadran est inerte : affiché en infobulle (entité indisponible, thermostat éteint, piloté par HA…). */
+  disabledReason?: string;
   color: string;
   label?: string;
   onCommit: (v: number) => void;
 };
 
 /** Cadran de consigne : glisser sur l'arc ou utiliser − / +. Le point blanc marque la température actuelle. */
-export function Dial({ value, current, min = 5, max = 28, step = 0.5, heating, disabled, color, label, onCommit }: Props) {
+export function Dial({ value, current, min = 5, max = 28, step = 0.5, heating, disabled, disabledReason, color, label, onCommit }: Props) {
   const [draft, setDraft] = useState<number | null>(null);
   const ref = useRef<SVGSVGElement>(null);
   const shown = draft ?? value;
@@ -64,9 +66,9 @@ export function Dial({ value, current, min = 5, max = 28, step = 0.5, heating, d
   const stroke = hot ? "url(#heatGrad)" : color;
 
   return (
-    <div className="dial" style={{ opacity: disabled ? 0.45 : 1 }}>
+    <div className="dial" style={{ opacity: disabled ? 0.45 : 1 }} title={disabled ? disabledReason : undefined}>
       <svg ref={ref} viewBox="0 0 220 200" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} role="slider"
-        aria-label={label ?? "Consigne"} aria-valuemin={min} aria-valuemax={max} aria-valuenow={shown}>
+        aria-label={label ?? "Consigne"} aria-valuemin={min} aria-valuemax={max} aria-valuenow={shown} aria-disabled={disabled || undefined}>
         <defs>
           <linearGradient id="heatGrad" x1="0" y1="1" x2="1" y2="0">
             <stop offset="0" stopColor="#f2b441" />

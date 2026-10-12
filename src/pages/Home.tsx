@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, BedDouble, Cloud, CloudFog, CloudLightning, CloudRain, CloudSun, Droplets, Flame, Lightbulb, Monitor, Moon, PlaneTakeoff, Snowflake, Sofa, Sun, Wind } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, BedDouble, Cloud, CloudFog, CloudLightning, CloudRain, CloudSun, Droplets, Flame, Lightbulb, Monitor, Moon, PlaneTakeoff, Snowflake, Sofa, Sun, WifiOff, Wind } from "lucide-react";
 import { useCall, useEnt } from "@data";
 import { CITY, COVERS, E, OUTSIDE, ROOMS, USER_NAME, type Room } from "@config";
 import { clock, fmtDuration, greeting, n1, useNow } from "../util";
@@ -43,11 +43,14 @@ function RoomCard({ room, onOpen }: { room: Room; onOpen: () => void }) {
   const clim = useEnt(room.climate);
   const Icon = ROOM_ICON[room.icon];
   const heating = clim?.attrs.hvac_action === "heating";
+  // La pièce reste consultable même si son thermostat ne répond pas : on le dit
+  // plutôt que d'afficher des tirets sans explication.
+  const indisponible = !clim || !clim.ok;
   return (
-    <button className="card room tap" style={{ ["--c" as string]: room.color }} onClick={onOpen} aria-label={`Ouvrir ${room.name}`}>
+    <button className="card room tap" style={{ ["--c" as string]: room.color, opacity: indisponible ? 0.55 : 1 }} onClick={onOpen} aria-label={`Ouvrir ${room.name}`}>
       <div className="row between" style={{ position: "relative" }}>
         <div className="row" style={{ gap: 9 }}><Icon style={{ width: 20, height: 20 }} /><b style={{ fontSize: 16 }}>{room.name}</b></div>
-        {heating ? <span className="badge heat"><Flame /> Chauffe</span> : <span className="badge">Au repos</span>}
+        {indisponible ? <span className="badge warn"><WifiOff /> Indisponible</span> : heating ? <span className="badge heat"><Flame /> Chauffe</span> : <span className="badge">Au repos</span>}
       </div>
       <div className="row" style={{ alignItems: "flex-end", margin: "16px 0 14px", gap: 6 }}>
         <span className="num big">{n1(temp?.num)}</span><span className="num" style={{ fontSize: 24, paddingBottom: 6, color: "var(--muted)" }}>°C</span>
@@ -73,8 +76,23 @@ function Alerts() {
   );
 }
 
-function Quick() {
-  const call = useCall();
+/**
+ * Bandeau d'un mode de maison actif (absence, vacances…). Les modes concernés
+ * sont marqués `banner: true` dans la configuration, ce qui évite de deviner
+ * lesquels méritent d'être visibles sur l'accueil.
+ */
+function ModeBanner({ entity, name, hint }: { entity: string; name: string; hint: string }) {
+  const e = useEnt(entity);
+  if (!e?.on) return null;
+  return (
+    <div className="alert" role="status">
+      <PlaneTakeoff />
+      <span><b>{name}</b> — {hint}</span>
+    </div>
+  );
+}
+
+function Quick() {  const call = useCall();
   const light = useEnt(E.light);
   const away = useEnt(E.modes[0].entity);
   const ids = COVERS.map((c) => c.id);
@@ -135,6 +153,9 @@ export default function Home() {
       <div className="stack" style={{ marginTop: 16 }}>
         <Quick />
         <Alerts />
+        {E.modes.filter((m) => m.banner).map((m) => (
+          <ModeBanner key={m.entity} entity={m.entity} name={m.name} hint={m.hint} />
+        ))}
       </div>
 
       <section className="section" aria-label="Pièces">
@@ -160,11 +181,18 @@ export default function Home() {
               <div className="kv"><span>Apport solaire</span><b>{solar?.on ? "Possible" : "Non"}</b></div>
             </div>
           </div>
-          <div className="card">
-            <div className="row between"><div className="eyebrow">Éclairage</div><button className={`switch${light?.on ? " on" : ""}`} onClick={() => call("light", "toggle", {}, E.light)} aria-label="Allumer ou éteindre" aria-pressed={!!light?.on} /></div>
+          <div className="card" style={light && light.ok ? undefined : { opacity: 0.55 }}>
+            <div className="row between">
+              <div className="eyebrow">Éclairage</div>
+              {light && light.ok ? (
+                <button className={`switch${light.on ? " on" : ""}`} onClick={() => call("light", "toggle", {}, E.light)} aria-label="Allumer ou éteindre" aria-pressed={light.on} />
+              ) : (
+                <span className="badge warn"><WifiOff /> Indisponible</span>
+              )}
+            </div>
             <div className="row" style={{ marginTop: 14, gap: 12 }}>
               <Lightbulb style={{ width: 20, height: 20, color: light?.on ? "var(--brass)" : "var(--faint)" }} />
-              <input type="range" min={1} max={255} disabled={!light?.on} value={Number(light?.attrs.brightness ?? 0)} aria-label="Luminosité"
+              <input type="range" min={1} max={255} disabled={!light?.on || !light.ok} value={Number(light?.attrs.brightness ?? 0)} aria-label="Luminosité"
                 onChange={(e) => call("light", "turn_on", { brightness: Number(e.target.value) }, E.light)} style={{ flex: 1, accentColor: "#f2b441" }} />
             </div>
           </div>

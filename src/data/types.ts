@@ -19,6 +19,14 @@ export interface Point {
 
 export type Call = (domain: string, service: string, data?: Record<string, unknown>, entityId?: string | string[]) => void;
 
+/**
+ * État de la liaison avec Home Assistant.
+ * « reconnexion » couvre aussi la toute première connexion : l'interface se
+ * contente alors d'un indicateur discret, car les valeurs affichées pendant une
+ * coupure sont celles d'avant. Le mode démonstration est toujours « connecte ».
+ */
+export type Liaison = "connecte" | "reconnexion" | "erreur";
+
 export function toEnt(id: string, state: string, attrs: Record<string, any> = {}): Ent {
   const n = Number(state);
   return {
