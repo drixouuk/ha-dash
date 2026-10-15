@@ -3,6 +3,7 @@ import { useCall, useEnt, useHist } from "@data";
 import { E, ROOMS } from "@config";
 import { dureeEtatFinal, fmtDuration, n1 } from "../util";
 import { HvacModes, RoomDial } from "../ui/RoomSheet";
+import { PresenceBadge } from "../ui/Presence";
 import { Timeline } from "../ui/Charts";
 
 function Stepper({ entity, name }: { entity: string; name: string }) {
@@ -42,7 +43,10 @@ function RoomHeat({ i }: { i: number }) {
     <div className="card room" style={{ ["--c" as string]: room.color }}>
       <div className="row between wrap" style={{ position: "relative", marginBottom: 6 }}>
         <div className="row" style={{ gap: 8 }}><i className="dotc" /><b style={{ fontSize: 17 }}>{room.name}</b></div>
-        {heating ? <span className="badge heat"><Flame /> En chauffe</span> : <span className="badge">Au repos</span>}
+        <div className="row wrap" style={{ gap: 6, justifyContent: "flex-end" }}>
+          {heating ? <span className="badge heat"><Flame /> En chauffe</span> : <span className="badge">Au repos</span>}
+          <PresenceBadge entity={room.presence} />
+        </div>
       </div>
       <RoomDial room={room.name} climate={room.climate} color={room.color} />
       <div style={{ display: "grid", justifyItems: "center", marginTop: 12 }}><HvacModes climate={room.climate} /></div>

@@ -31,6 +31,7 @@ there *and* the matching block in the page that uses it.
 | 2 | City shown on Accueil and Prières | `src/config.local.ts` → `CITY` | replace |
 | 3 | Rooms, their icons, colours and sensors | `src/config.local.ts` → `ROOMS` | replace |
 | 4 | Outdoor temperature/humidity | `src/config.local.ts` → `OUTSIDE` | replace |
+| 4b | Presence sensor of a room (optional) | `ROOMS[].presence` | replace / remove |
 | 5 | Covers (shutters, blinds) | `src/config.local.ts` → `COVERS` | replace / remove rows |
 | 6 | Heating, per room | `ROOMS[].climate`, `.heating`, `.setpoint`, `.statDay`, `.statWeek` | replace |
 | 7 | Boiler / main thermostat | `src/config.local.ts` → `E.nest` | replace |
@@ -65,6 +66,7 @@ export const CONFIG: MaisonConfig = {
       hum:     "sensor.salon_humidite",         // humidity
       covers:  ["cover.salon_droite"],          // shutters of this room
       heating: "binary_sensor.salon_chauffe",   // "this room is heating" (binary_sensor)
+      presence: "binary_sensor.salon_presence", // occupancy sensor of the room (optional)
       statDay: "sensor.salon_chauffe_aujourd_hui",   // heating hours today
       statWeek:"sensor.salon_chauffe_7_jours",       // heating hours, last 7 days
       setpoint:"input_number.consigne_salon" },      // target temperature helper

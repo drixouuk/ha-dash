@@ -21,6 +21,8 @@ export type Room = {
   hum: string;
   covers: string[];
   heating: string; // binary_sensor : la pièce est en chauffe
+  /** Capteur d'occupation de la pièce (facultatif) : affiché sur les cartes, il explique une consigne éco. */
+  presence?: string;
   statDay: string;
   statWeek: string;
   setpoint: string;
@@ -81,6 +83,7 @@ export const CONFIG: MaisonConfig = {
       temp: "sensor.salon_temperature", hum: "sensor.salon_humidite",
       covers: ["cover.salon_droite", "cover.salon_gauche"],
       heating: "binary_sensor.salon_chauffe",
+      presence: "binary_sensor.salon_presence",
       statDay: "sensor.salon_chauffe_aujourd_hui", statWeek: "sensor.salon_chauffe_7_jours",
       setpoint: "input_number.consigne_salon",
     },
@@ -90,6 +93,7 @@ export const CONFIG: MaisonConfig = {
       temp: "sensor.chambre_temperature", hum: "sensor.chambre_humidite",
       covers: ["cover.chambre"],
       heating: "binary_sensor.chambre_chauffe",
+      presence: "binary_sensor.chambre_presence",
       statDay: "sensor.chambre_chauffe_aujourd_hui", statWeek: "sensor.chambre_chauffe_7_jours",
       setpoint: "input_number.consigne_chambre",
     },
@@ -99,6 +103,7 @@ export const CONFIG: MaisonConfig = {
       temp: "sensor.bureau_temperature", hum: "sensor.bureau_humidite",
       covers: ["cover.bureau"],
       heating: "binary_sensor.bureau_chauffe",
+      presence: "binary_sensor.bureau_presence",
       statDay: "sensor.bureau_chauffe_aujourd_hui", statWeek: "sensor.bureau_chauffe_7_jours",
       setpoint: "input_number.consigne_bureau",
     },

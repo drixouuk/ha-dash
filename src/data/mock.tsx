@@ -25,9 +25,9 @@ const HEURES: Record<string, [string, string]> = {
 
 /** Valeurs simulées par pièce, dans l'ordre de `ROOMS`. */
 const PIECES = [
-  { temp: 19.4, hum: 52, consigne: 20.5, action: "heating", chauffe: "on", jour: 3.2, semaine: 21.4 },
-  { temp: 17.8, hum: 58, consigne: 17, action: "idle", chauffe: "off", jour: 1.1, semaine: 9.8 },
-  { temp: 18.9, hum: 55, consigne: 19, action: "idle", chauffe: "off", jour: 2.0, semaine: 12.6 },
+  { temp: 19.4, hum: 52, consigne: 20.5, action: "heating", chauffe: "on", jour: 3.2, semaine: 21.4, presence: "on" },
+  { temp: 17.8, hum: 58, consigne: 17, action: "idle", chauffe: "off", jour: 1.1, semaine: 9.8, presence: "off" },
+  { temp: 18.9, hum: 55, consigne: 19, action: "idle", chauffe: "off", jour: 2.0, semaine: 12.6, presence: "on" },
 ];
 
 /** Position simulée par volet, dans l'ordre de `COVERS`. */
@@ -72,6 +72,7 @@ const store: Record<string, S> = {
         [piece.temp, { state: String(v.temp), attrs: { unit_of_measurement: "°C" } }],
         [piece.hum, { state: String(v.hum), attrs: { unit_of_measurement: "%" } }],
         [piece.heating, { state: v.chauffe, attrs: {} }],
+        ...(piece.presence ? [[piece.presence, { state: v.presence, attrs: {} }]] : []),
         [piece.statDay, { state: String(v.jour), attrs: { unit_of_measurement: "h" } }],
         [piece.statWeek, { state: String(v.semaine), attrs: { unit_of_measurement: "h" } }],
         [piece.setpoint, { state: String(v.consigne), attrs: { min: 5, max: 26, step: 0.5 } }],

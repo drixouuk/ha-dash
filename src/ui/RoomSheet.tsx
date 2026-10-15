@@ -5,6 +5,7 @@ import { Dial } from "./Dial";
 import { Shutter } from "./Shutter";
 import { Sheet } from "./Sheet";
 import { Spark } from "./Spark";
+import { PresenceBadge } from "./Presence";
 import { n1 } from "../util";
 import { COVERS } from "@config";
 
@@ -58,7 +59,10 @@ function RoomSheetInner({ room, onClose }: { room: Room; onClose: () => void }) 
       <div className="stack" style={{ gap: 20 }}>
         <div className="row between wrap">
           <HvacModes climate={room.climate} />
-          {heating ? <span className="badge heat"><Flame /> En chauffe</span> : <span className="badge">Au repos</span>}
+          <div className="row wrap" style={{ gap: 6 }}>
+            {heating ? <span className="badge heat"><Flame /> En chauffe</span> : <span className="badge">Au repos</span>}
+            <PresenceBadge entity={room.presence} />
+          </div>
         </div>
         <RoomDial room={room.name} climate={room.climate} color={room.color} />
         <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}>

@@ -5,6 +5,7 @@ import { CITY, COVERS, E, OUTSIDE, ROOMS, USER_NAME, type Room } from "@config";
 import { clock, fmtDuration, greeting, n1, useNow } from "../util";
 import { usePrayers } from "../ui/prayer";
 import { SunArc } from "../ui/SunArc";
+import { PresenceBadge } from "../ui/Presence";
 import { RoomSheet } from "../ui/RoomSheet";
 
 const ROOM_ICON = { sofa: Sofa, bed: BedDouble, desk: Monitor };
@@ -50,7 +51,10 @@ function RoomCard({ room, onOpen }: { room: Room; onOpen: () => void }) {
     <button className="card room tap" style={{ ["--c" as string]: room.color, opacity: indisponible ? 0.55 : 1 }} onClick={onOpen} aria-label={`Ouvrir ${room.name}`}>
       <div className="row between" style={{ position: "relative" }}>
         <div className="row" style={{ gap: 9 }}><Icon style={{ width: 20, height: 20 }} /><b style={{ fontSize: 16 }}>{room.name}</b></div>
-        {indisponible ? <span className="badge warn"><WifiOff /> Indisponible</span> : heating ? <span className="badge heat"><Flame /> Chauffe</span> : <span className="badge">Au repos</span>}
+        <div className="row wrap" style={{ gap: 6, justifyContent: "flex-end" }}>
+          {indisponible ? <span className="badge warn"><WifiOff /> Indisponible</span> : heating ? <span className="badge heat"><Flame /> Chauffe</span> : <span className="badge">Au repos</span>}
+          <PresenceBadge entity={room.presence} />
+        </div>
       </div>
       <div className="row" style={{ alignItems: "flex-end", margin: "16px 0 14px", gap: 6 }}>
         <span className="num big">{n1(temp?.num)}</span><span className="num" style={{ fontSize: 24, paddingBottom: 6, color: "var(--muted)" }}>°C</span>
