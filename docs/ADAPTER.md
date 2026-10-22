@@ -133,17 +133,51 @@ Your Home Assistant automations stay in charge.
 
 ### 10b. Floor plan (optional)
 
-`PLAN` draws the home as an isometric model (plain SVG, no 3D library) with one
-live marker per device; the **Plan** tab only appears when the field is set.
+`PLAN` draws the home with one live marker per device; the **Plan** tab only
+appears when the field is set. Three views: **3D** (Three.js, loaded only when
+that view opens; textured floors, walls with real window and door openings,
+shadows, devices modelled after their real shape and driven by their state —
+radiator glowing while heating, shutters at their real position, TV lit, lamp
+on), **Iso** and **Dessus** (plain SVG, used as a fallback without WebGL).
+On weak hardware (≤ 2 GB of memory) the 3D view drops shadows and antialiasing
+and only renders when something changes.
 
 - `outline` — the footprint of the home, walls included; `zones` — the inside
   contour of each room. Points are `[x, y]` in **centimetres**, x to the right
   and y downwards, as read on a 2D plan with its dimensions. Link a zone to a
   room of `ROOMS` with `room` (tinted floor, live temperature, tap opens the
   room sheet); mark a balcony or terrace with `outdoor: true`.
-- `devices` — `{ id, entity, kind, name, at }`. `kind` picks the icon and the
-  short value shown under the marker (`thermostat`, `trv`, `sensor`,
-  `presence`, `cover`, `contact`, `light`, `media`, `hub`, `plant`).
+- `zones[].floor` — `parquet` (default), `carrelage` or `exterieur` in 3D.
+- `devices` — `{ id, entity, kind, name, at, z?, model? }`. `kind` picks the
+  icon, the 3D object and the short value shown on the label (`thermostat`,
+  `trv`, `sensor`, `presence`, `cover`, `contact`, `light`, `media`, `hub`,
+  `plant`). `z` is the height of the device in cm (e.g. a TV above a sound
+  bar); `model` picks the shape of a `media` device: `tv`, `soundbar` (drawn
+  on a TV stand when raised) or `speaker`. Wall devices (radiator valve,
+  thermostat, sensors, TV…) snap to the nearest wall within 60 cm.
+- `openings` — optional, for the 3D view: `{ kind: "window" | "door" |
+  "passage", at, w }`, centred anywhere in the thickness of the wall (within
+  40 cm), `w` in cm. A window can carry `cover` (its shutter entity, drawn at
+  its live position), a door `contact` (its opening sensor: the leaf opens with
+  it), or `sliding: true` for a sliding door. A window takes `sill` (height in cm, 90 by default; `0` for a French
+  window). Without openings, walls are solid.
+- `furniture` — optional furniture for the 3D view: `{ kind, at, w, d, h?,
+  rot?, color? }` with `kind` among `sofa`, `table`, `coffee-table`, `bed`,
+  `nightstand`, `wardrobe` (`doors`: number of doors), `fridge`, `kitchen`,
+  `duct` (a technical shaft: solid box in the wall colour), `bathtub`,
+  `toilet` (wall-hung, with its flush plate on the wall behind). `at` is the centre, `w` × `d`
+  the footprint in cm, `rot` turns the front (0 = towards the bottom of the
+  plan, 90 = right, 180 = up, 270 = left). A `kitchen` lists its `modules`
+  from left to right as seen from the front — `base`, `sink`, `dishwasher`,
+  `oven`, `washer`, each with its width and `upper: true` for a wall cabinet
+  above. Windows take `curtain: true` for sheer linen curtains, drawn to the
+  sides (they let the sun through).
+- `zones[].parapet` — for an `outdoor` zone (balcony): height of the low wall
+  on its outer sides, 100 cm by default; walls shared with the home stay full.
+- `orientation` + `sun` — the azimuth the top of the 2D plan faces (0 = north,
+  90 = east) and the sun entity (`sun.sun`). The 3D view then puts the sun at
+  its real position; an invisible ceiling makes it come in through the windows
+  only (closed shutters block it), and it switches off at night.
 - Placing devices: on the Plan page, **Placer les appareils** switches to a top
   view where markers can be dragged; the page then gives the `devices` block to
   paste back into `src/config.local.ts`. Dragged positions are only kept in

@@ -101,6 +101,8 @@ const PAR_SORTE: Record<string, S> = {
   plant: { state: "41", attrs: { unit_of_measurement: "%" } },
 };
 for (const d of PLAN?.devices ?? []) if (!store[d.entity]) store[d.entity] = PAR_SORTE[d.kind];
+// Soleil du milieu de matinée, pour que la démo 3D montre la lumière entrer par les fenêtres.
+if (PLAN?.sun && !store[PLAN.sun]) store[PLAN.sun] = { state: "above_horizon", attrs: { azimuth: 112, elevation: 24 } };
 
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());

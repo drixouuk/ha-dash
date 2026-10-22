@@ -59,7 +59,11 @@ function horloge(hhmm) {
   return d;
 }
 
-const navigateur = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
+// WebGL logiciel (SwiftShader) : la vue 3D de la page Plan s'affiche aussi sans GPU.
+const navigateur = await chromium.launch({
+  executablePath: CHROME,
+  args: ["--no-sandbox", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
+});
 const contexte = await navigateur.newContext({ viewport: { width: 1440, height: 1200 } });
 await mkdir(OUT, { recursive: true });
 
@@ -85,6 +89,11 @@ async function capturer(chemin, fichier, moment) {
     await onglet.goto(`${BASE}/#/${chemin}`, { waitUntil: "load", timeout: 20_000 });
     await onglet.waitForSelector(".dock", { timeout: 15_000 });
     await onglet.waitForTimeout(400); // laisse jouer l'animation d'entrée de page
+    if (chemin === "plan") {
+      // Maquette 3D chargée à la demande (ou plan SVG de secours), puis premières images.
+      await onglet.waitForSelector(".plan3d canvas, svg.iso-plan", { timeout: 30_000 });
+      await onglet.waitForTimeout(2_500);
+    }
     await onglet.screenshot({ path: fichier });
 
     if (erreurs.length) {

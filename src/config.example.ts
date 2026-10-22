@@ -50,6 +50,44 @@ export type PlanZone = {
   room?: string;
   /** Balcon, terrasse… : sol hachuré et garde-corps bas au lieu des murs. */
   outdoor?: boolean;
+  /** Revêtement en 3D (parquet par défaut, `exterieur` pour une zone `outdoor`). */
+  floor?: "parquet" | "carrelage" | "exterieur";
+  /** Zone `outdoor` : hauteur (cm) du muret côté extérieur, 100 par défaut. Les murs côté logement restent pleins. */
+  parapet?: number;
+};
+
+/**
+ * Ouverture dans un mur, pour la vue 3D : son centre `at` se place n'importe où
+ * dans l'épaisseur du mur (à 40 cm près), `w` est sa largeur en cm. Une fenêtre
+ * peut porter le volet qui la ferme, une porte le capteur d'ouverture qui la surveille.
+ */
+export type PlanOpening =
+  /** `sill` : hauteur d'allège en cm (90 par défaut, 0 pour une porte-fenêtre) ; `curtain` : voilage de lin. */
+  | { kind: "window"; at: PlanPoint; w: number; cover?: string; sill?: number; curtain?: boolean }
+  | { kind: "door"; at: PlanPoint; w: number; contact?: string; sliding?: boolean }
+  | { kind: "passage"; at: PlanPoint; w: number };
+
+/** Module d'une cuisine, de gauche à droite vu de face ; `upper` : meuble haut au-dessus. */
+export type PlanKitchenModule = { type: "base" | "dishwasher" | "oven" | "washer" | "sink"; w: number; upper?: boolean };
+
+/**
+ * Meuble de la vue 3D. `at` est son centre, `w` sa largeur et `d` sa profondeur
+ * (cm) ; `rot` tourne sa façade : 0 = vers le bas du plan, 90 = vers la droite,
+ * 180 = vers le haut, 270 = vers la gauche.
+ */
+export type PlanFurniture = {
+  /** `duct` : gaine technique (coffrage plein du sol au plafond, couleur des murs). */
+  kind: "sofa" | "table" | "coffee-table" | "bed" | "nightstand" | "wardrobe" | "fridge" | "kitchen" | "duct" | "bathtub" | "toilet";
+  at: PlanPoint;
+  w: number;
+  d: number;
+  h?: number;
+  rot?: number;
+  color?: string;
+  /** `wardrobe` : nombre de portes (une par 50 cm de largeur par défaut). */
+  doors?: number;
+  /** `kitchen` : les modules, dont la somme des largeurs fait `w`. */
+  modules?: readonly PlanKitchenModule[];
 };
 
 export type PlanDevice = {
@@ -59,6 +97,10 @@ export type PlanDevice = {
   kind: PlanDeviceKind;
   name: string;
   at: PlanPoint;
+  /** Hauteur au-dessus du sol en cm (facultatif) : sépare deux appareils superposés, une télé au-dessus d'une barre de son… */
+  z?: number;
+  /** Forme de l'objet en 3D pour un appareil multimédia (enceinte par défaut). */
+  model?: "tv" | "soundbar" | "speaker";
 };
 
 export type Plan = {
@@ -66,6 +108,17 @@ export type Plan = {
   outline: readonly PlanPoint[];
   zones: readonly PlanZone[];
   devices: readonly PlanDevice[];
+  /** Fenêtres, portes et passages de la vue 3D (facultatif : sans eux, les murs sont pleins). */
+  openings?: readonly PlanOpening[];
+  /** Mobilier de la vue 3D (facultatif). */
+  furniture?: readonly PlanFurniture[];
+  /**
+   * Azimut (°, 0 = nord, 90 = est) vers lequel regarde le haut du plan 2D. Avec
+   * `sun`, le soleil de la vue 3D est à sa position réelle et n'entre que par les fenêtres.
+   */
+  orientation?: number;
+  /** Entité du soleil (attributs `azimuth` et `elevation`), en général `sun.sun`. */
+  sun?: string;
 };
 
 export type MaisonConfig = {
@@ -178,11 +231,11 @@ export const CONFIG: MaisonConfig = {
     outline: [[0, 0], [920, 0], [920, 620], [0, 620]],
     zones: [
       { name: "Salon", room: "salon", poly: [[10, 10], [430, 10], [430, 380], [10, 380]] },
-      { name: "Cuisine", poly: [[440, 10], [620, 10], [620, 250], [440, 250]] },
+      { name: "Cuisine", floor: "carrelage", poly: [[440, 10], [620, 10], [620, 250], [440, 250]] },
       { name: "Chambre", room: "chambre", poly: [[630, 10], [910, 10], [910, 300], [630, 300]] },
       { name: "Bureau", room: "bureau", poly: [[630, 310], [910, 310], [910, 610], [630, 610]] },
       { name: "Entrée", poly: [[440, 260], [620, 260], [620, 610], [440, 610]] },
-      { name: "Salle de bain", poly: [[10, 390], [430, 390], [430, 610], [10, 610]] },
+      { name: "Salle de bain", floor: "carrelage", poly: [[10, 390], [430, 390], [430, 610], [10, 610]] },
     ],
     devices: [
       { id: "thermostat", entity: "climate.thermostat_principal", kind: "thermostat", name: "Thermostat principal", at: [415, 200] },
@@ -199,6 +252,28 @@ export const CONFIG: MaisonConfig = {
       { id: "sonde_bureau", entity: "sensor.bureau_temperature", kind: "sensor", name: "Sonde bureau", at: [660, 560] },
       { id: "presence_bureau", entity: "binary_sensor.bureau_presence", kind: "presence", name: "Présence bureau", at: [890, 590] },
       { id: "lumiere", entity: "light.salon", kind: "light", name: "Lumière", at: [220, 200] },
+    ],
+    furniture: [
+      { kind: "sofa", at: [60, 200], w: 220, d: 92, rot: 90, color: "#8d9096" },
+      { kind: "coffee-table", at: [190, 200], w: 110, d: 55, rot: 90 },
+      { kind: "bed", at: [810, 170], w: 160, d: 200, rot: 270 },
+      { kind: "nightstand", at: [889, 65], w: 45, d: 40, rot: 270 },
+      { kind: "nightstand", at: [889, 275], w: 45, d: 40, rot: 270 },
+    ],
+    orientation: 160,
+    sun: "sun.sun",
+    openings: [
+      { kind: "window", at: [120, 5], w: 120, cover: "cover.salon_gauche" },
+      { kind: "window", at: [320, 5], w: 120, cover: "cover.salon_droite" },
+      { kind: "window", at: [770, 5], w: 110, cover: "cover.chambre" },
+      { kind: "window", at: [915, 460], w: 110, cover: "cover.bureau" },
+      { kind: "window", at: [530, 5], w: 90 },
+      { kind: "door", at: [530, 615], w: 90 },
+      { kind: "passage", at: [435, 200], w: 120 },
+      { kind: "passage", at: [530, 255], w: 80 },
+      { kind: "door", at: [625, 150], w: 80 },
+      { kind: "door", at: [625, 450], w: 80 },
+      { kind: "door", at: [435, 500], w: 80 },
     ],
   },
 

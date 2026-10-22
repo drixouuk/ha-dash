@@ -137,7 +137,9 @@ function Repere({ d, at, P, h, k, edition, actif, onDown, onOpen }: {
   const e = useEnt(d.entity);
   const { text, ton } = lecture(d.kind, e);
   const Icon = d.kind === "contact" && e?.on ? DoorOpen : KIND[d.kind].Icon;
-  const base = P(at[0], at[1]), haut = P(at[0], at[1], KIND[d.kind].z * h);
+  // Murs coupés à h (90 cm dessinés) : une hauteur réelle (cm) est ramenée à cette échelle, plafonnée.
+  const z = d.z != null ? (Math.min(d.z, 120) * h) / 100 : KIND[d.kind].z * h;
+  const base = P(at[0], at[1]), haut = P(at[0], at[1], z);
   const r = 15 * k, w = (text.length * 6.6 + 14) * k;
   const couleur = TON[ton];
   return (

@@ -69,6 +69,23 @@ button { font: inherit; color: inherit; }
 .iso-plan .plan-dev:focus-visible { outline: none; }
 .iso-plan .plan-dev:focus-visible circle { stroke: var(--brass); stroke-width: 4; }
 
+/* Vue 3D : étiquettes HTML posées sur la maquette */
+.plan3d { position: relative; width: 100%; height: min(72vh, 680px); min-height: 380px; touch-action: none; }
+.plan3d-calque { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+.plan3d-calque > div { pointer-events: auto; }
+.plan3d-wait { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 600; }
+.chip3d { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px 4px 7px; border-radius: 99px; border: 1px solid var(--line);
+  background: rgba(12,16,32,.86); color: var(--text); font: 700 11.5px var(--body); white-space: nowrap; cursor: pointer;
+  box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); backdrop-filter: blur(6px); }
+.chip3d svg { width: 13px; height: 13px; stroke-width: 2.2; }
+.chip3d.t-ok { color: var(--ok); } .chip3d.t-heat { color: #ffb08f; border-color: rgba(255,122,69,.5); } .chip3d.t-warn { color: var(--brass); }
+.chip3d.off { border-style: dashed; opacity: .75; }
+.piece3d { display: grid; justify-items: center; line-height: 1.05; text-align: center; pointer-events: none; text-shadow: 0 1px 8px rgba(0,0,0,.85); }
+.piece3d.tap { pointer-events: auto; cursor: pointer; }
+.piece3d span { font: 700 10px var(--body); letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.85); }
+.piece3d b { font-size: 19px; color: #fff; }
+.icon-btn.dim { opacity: .5; }
+
 /* ---------- Surfaces ---------- */
 .card {
   position: relative; border-radius: var(--r); padding: 18px;

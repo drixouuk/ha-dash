@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Check, Copy, Pencil, RotateCcw, RotateCw, Undo2, WifiOff } from "lucide-react";
+import { Suspense, lazy, useState } from "react";
+import { Check, Copy, LocateFixed, Pencil, RotateCcw, RotateCw, Tag, Undo2, WifiOff } from "lucide-react";
 import { useCall, useEnt } from "@data";
 import { COVERS, PLAN, ROOMS, type Plan as PlanT, type PlanDevice, type PlanPoint, type Room } from "@config";
 import { IsoPlan, KIND, VUE_3D, VUE_DESSUS, lecture, zoneDe } from "../ui/IsoPlan";
@@ -7,6 +7,30 @@ import { RoomSheet } from "../ui/RoomSheet";
 import { Sheet } from "../ui/Sheet";
 import { Shutter } from "../ui/Shutter";
 import { n1 } from "../util";
+
+// Three.js n'est chargé qu'à l'ouverture de la vue 3D : le reste du dashboard reste léger.
+const Scene3D = lazy(() => import("../ui/plan3d/Scene3D"));
+
+const webgl = (() => {
+  try {
+    const c = document.createElement("canvas");
+    return Boolean(c.getContext("webgl2") ?? c.getContext("webgl"));
+  } catch {
+    return false;
+  }
+})();
+
+type Mode = "3d" | "iso" | "dessus";
+const CLE_VUE = "ha-dash.plan.vue";
+function lireVue(): Mode {
+  try {
+    const v = window.localStorage.getItem(CLE_VUE);
+    if (v === "iso" || v === "dessus" || (v === "3d" && webgl)) return v;
+  } catch {
+    /* stockage indisponible */
+  }
+  return webgl ? "3d" : "iso";
+}
 
 /**
  * Positions déplacées en mode édition : gardées dans ce navigateur le temps de
@@ -34,7 +58,7 @@ function extrait(plan: PlanT, positions: Record<string, PlanPoint>) {
   const q = JSON.stringify;
   const lignes = plan.devices.map((d) => {
     const [x, y] = positions[d.id] ?? d.at;
-    return `      { id: ${q(d.id)}, entity: ${q(d.entity)}, kind: ${q(d.kind)}, name: ${q(d.name)}, at: [${x}, ${y}] },`;
+    return `      { id: ${q(d.id)}, entity: ${q(d.entity)}, kind: ${q(d.kind)}, name: ${q(d.name)}, at: [${x}, ${y}]${d.z != null ? `, z: ${d.z}` : ""} },`;
   });
   return `    devices: [\n${lignes.join("\n")}\n    ],`;
 }
@@ -98,7 +122,14 @@ export default function Plan() {
   // Écran étroit (téléphone en portrait) : un quart de tour met la longueur du logement dans la hauteur.
   const etroit = window.innerWidth < 640;
   const [rot, setRot] = useState(etroit ? 78 : -12);
-  const [mode, setMode] = useState<"3d" | "dessus">("3d");
+  const [mode, setModeBrut] = useState<Mode>(lireVue);
+  const setMode = (v: Mode) => {
+    setModeBrut(v);
+    try { window.localStorage.setItem(CLE_VUE, v); } catch { /* préférence non retenue */ }
+  };
+  const [mursBas, setMursBas] = useState(false);
+  const [etiquettes, setEtiquettes] = useState(true);
+  const [recentrer, setRecentrer] = useState(0);
   const [edition, setEdition] = useState(false);
   const [positions, setPositions] = useState<Record<string, PlanPoint>>(lirePositions);
   const [appareil, setAppareil] = useState<PlanDevice | null>(null);
@@ -108,7 +139,8 @@ export default function Plan() {
   const plan = PLAN;
 
   // En édition, vue de dessus droite : un glissé correspond exactement au sol.
-  const vue = edition ? { ...VUE_DESSUS, rot: etroit ? 90 : 0 } : { ...(mode === "3d" ? VUE_3D : VUE_DESSUS), rot };
+  const vue = edition ? { ...VUE_DESSUS, rot: etroit ? 90 : 0 } : { ...(mode === "dessus" ? VUE_DESSUS : VUE_3D), rot };
+  const en3d = mode === "3d" && !edition;
   const deplacer = (id: string, at: PlanPoint) => {
     setPositions((p) => { const n = { ...p, [id]: at }; ecrirePositions(n); return n; });
     setCopie(null);
@@ -135,11 +167,22 @@ export default function Plan() {
           {!edition && (
             <>
               <div className="seg" role="group" aria-label="Vue">
-                <button className={mode === "3d" ? "on" : ""} onClick={() => setMode("3d")}>3D</button>
+                {webgl && <button className={mode === "3d" ? "on" : ""} onClick={() => setMode("3d")}>3D</button>}
+                <button className={mode === "iso" ? "on" : ""} onClick={() => setMode("iso")}>Iso</button>
                 <button className={mode === "dessus" ? "on" : ""} onClick={() => setMode("dessus")}>Dessus</button>
               </div>
-              <button className="icon-btn" onClick={() => setRot((r) => r - 45)} aria-label="Tourner à gauche"><RotateCcw /></button>
-              <button className="icon-btn" onClick={() => setRot((r) => r + 45)} aria-label="Tourner à droite"><RotateCw /></button>
+              {en3d ? (
+                <>
+                  <button className={`chip${mursBas ? " on" : ""}`} onClick={() => setMursBas((v) => !v)} aria-pressed={mursBas}>Murs bas</button>
+                  <button className={`icon-btn${etiquettes ? "" : " dim"}`} onClick={() => setEtiquettes((v) => !v)} aria-pressed={etiquettes} aria-label="Afficher les étiquettes"><Tag /></button>
+                  <button className="icon-btn" onClick={() => setRecentrer((n) => n + 1)} aria-label="Recentrer la vue"><LocateFixed /></button>
+                </>
+              ) : (
+                <>
+                  <button className="icon-btn" onClick={() => setRot((r) => r - 45)} aria-label="Tourner à gauche"><RotateCcw /></button>
+                  <button className="icon-btn" onClick={() => setRot((r) => r + 45)} aria-label="Tourner à droite"><RotateCw /></button>
+                </>
+              )}
             </>
           )}
           <button className={`chip${edition ? " on" : ""}`} onClick={() => setEdition((e) => !e)} aria-pressed={edition}>
@@ -155,18 +198,29 @@ export default function Plan() {
         </div>
       )}
 
-      <section className="card" style={{ padding: "10px 6px" }}>
+      <section className="card" style={{ padding: en3d ? 0 : "10px 6px", overflow: "hidden" }}>
+        {en3d ? (
+          <div className="plan3d">
+            <Suspense fallback={<div className="plan3d-wait sub">Chargement de la maquette 3D…</div>}>
+              <Scene3D
+                plan={plan} positions={positions} hauteur={mursBas ? 110 : 250} etiquettes={etiquettes} recentrer={recentrer}
+                onZone={(z) => setPiece(ROOMS.find((r) => r.id === z.room) ?? null)} onDevice={setAppareil}
+              />
+            </Suspense>
+          </div>
+        ) : (
         <IsoPlan
           plan={plan} vue={vue} positions={positions} edition={edition}
           onRot={setRot} onMove={deplacer}
           onZone={(z) => setPiece(ROOMS.find((r) => r.id === z.room) ?? null)}
           onDevice={setAppareil}
         />
+        )}
       </section>
 
       <div className="row between wrap section" style={{ marginTop: 14, gap: 10 }}>
         <Legende plan={plan} />
-        {!edition && <span className="sub" style={{ fontSize: 12.5 }}>Glissez pour tourner · touchez une pièce ou un appareil</span>}
+        {!edition && <span className="sub" style={{ fontSize: 12.5 }}>{en3d ? "Glissez pour tourner · pincez pour zoomer · deux doigts pour déplacer" : "Glissez pour tourner · touchez une pièce ou un appareil"}</span>}
       </div>
 
       {edition && (
