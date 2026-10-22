@@ -1,5 +1,5 @@
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { COVERS, E, OUTSIDE, ROOMS } from "@config";
+import { COVERS, E, OUTSIDE, PLAN, ROOMS } from "@config";
 import { toEnt, type Call, type Ent, type Liaison, type Point } from "./types";
 
 /**
@@ -33,8 +33,8 @@ const PIECES = [
 /** Position simulée par volet, dans l'ordre de `COVERS`. */
 const VOLETS: (number | "unavailable")[] = [100, 100, 35, "unavailable"];
 
-const CONSIGNES = [16, 7];
-const MODES = ["off", "off", "on"];
+const CONSIGNES = [16, 7, 17];
+const MODES = ["off", "off", "off", "on"];
 
 const store: Record<string, S> = {
   [E.weather]: { state: "partlycloudy", attrs: { temperature: 14, humidity: 71, wind_speed: 18, apparent_temperature: 12 } },
@@ -86,6 +86,21 @@ const store: Record<string, S> = {
     }),
   ),
 };
+
+/** Appareils du plan sans valeur simulée ci-dessus (têtes, multimédia, porte…) : valeur type par sorte. */
+const PAR_SORTE: Record<string, S> = {
+  thermostat: { state: "heat", attrs: { current_temperature: 19.2, temperature: 19, hvac_action: "idle" } },
+  trv: { state: "heat", attrs: { current_temperature: 19.6, temperature: 20, hvac_action: "idle" } },
+  sensor: { state: "19.6", attrs: { unit_of_measurement: "°C" } },
+  presence: { state: "on", attrs: {} },
+  cover: { state: "open", attrs: { current_position: 100 } },
+  contact: { state: "off", attrs: {} },
+  light: { state: "off", attrs: {} },
+  media: { state: "idle", attrs: {} },
+  hub: { state: "on", attrs: {} },
+  plant: { state: "41", attrs: { unit_of_measurement: "%" } },
+};
+for (const d of PLAN?.devices ?? []) if (!store[d.entity]) store[d.entity] = PAR_SORTE[d.kind];
 
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());

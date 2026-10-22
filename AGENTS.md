@@ -6,7 +6,8 @@ first: it is the entry point for adapting the dashboard to a home.
 ## What this is
 
 A React + TypeScript single-page dashboard for **Home Assistant**, built with
-Vite. Five pages — Accueil, Chauffage, Volets, Climat, Prières — share one
+Vite. Five pages — Accueil, Chauffage, Volets, Climat, Prières — plus an
+optional Plan page (isometric floor plan, when `PLAN` is configured) share one
 design system. Built output is a plain static folder (`dist/`) that Home
 Assistant serves from `/config/www/`, either as a sidebar panel or inside an
 iframe card.

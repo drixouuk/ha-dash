@@ -72,6 +72,11 @@ export default function Heating() {
   // Nest à chaque cycle : le cadran est alors grisé, plutôt que d'accepter un réglage aussitôt écrasé.
   // `E.boilerControl` nomme l'interrupteur qui l'indique (voir docs/ADAPTER.md) ; absent, le cadran reste actif.
   const pilotage = useEnt(E.boilerControl ?? "");
+  // Mode été (`E.summerMode`) : chaudière éteinte, orchestration suspendue — le cadran
+  // redevient libre et l'alerte de production n'a plus de sens.
+  const ete = useEnt(E.summerMode ?? "");
+  const enEte = ete?.on === true;
+  const piloteParHA = pilotage?.on === true && !enEte;
   const demand = useEnt(E.heatDemand);
   const rooms = useEnt(E.heatRooms);
   const solar = useEnt(E.solar);
@@ -80,17 +85,17 @@ export default function Heating() {
   const hist = useHist(ROOMS.map((r) => r.heating), 24);
   // Bandeau « la chaudière ne suit pas » : même diagnostic que l'automatisation
   // côté Home Assistant — une pièce demande de la chaleur depuis 30 minutes alors
-  // que le thermostat principal reste au repos.
+  // que le thermostat principal ne chauffe pas (au repos ou coupé), hors mode été.
   const demandeHist = useHist([E.heatDemand], 1);
   const demandeDepuis = demand?.on ? dureeEtatFinal(demandeHist[E.heatDemand], "on") : 0;
   const chaudiereMuette =
-    demand?.on === true && nest?.attrs.hvac_action === "idle" && demandeDepuis >= 30 * 60_000;
+    !enEte && demand?.on === true && nest != null && nest.attrs.hvac_action !== "heating" && demandeDepuis >= 30 * 60_000;
 
   return (
     <>
       <header className="head-page">
         <div><div className="eyebrow">Le Nest produit · les têtes demandent · HA orchestre</div><h1 className="h1">Chauffage</h1></div>
-        {demand?.on ? <span className="badge heat" style={{ fontSize: 14, padding: "8px 14px" }}><Flame /> Chaudière en demande · {rooms?.state ?? 0} pièce(s)</span> : <span className="badge" style={{ fontSize: 14, padding: "8px 14px" }}>Chaudière au repos</span>}
+        {enEte ? <span className="badge" style={{ fontSize: 14, padding: "8px 14px" }}><Sun /> Mode été · chaudière éteinte</span> : demand?.on ? <span className="badge heat" style={{ fontSize: 14, padding: "8px 14px" }}><Flame /> Chaudière en demande · {rooms?.state ?? 0} pièce(s)</span> : <span className="badge" style={{ fontSize: 14, padding: "8px 14px" }}>Chaudière au repos</span>}
       </header>
 
       {chaudiereMuette && (
@@ -98,8 +103,8 @@ export default function Heating() {
           <AlertTriangle />
           <span>
             La chaudière ne suit pas : une pièce demande de la chaleur depuis {fmtDuration(demandeDepuis)} et le
-            thermostat principal est au repos. Causes possibles : mode éco, ou consigne écrasée par le programme du
-            thermostat.
+            thermostat principal ne chauffe pas. Causes possibles : chaudière en défaut, thermostat coupé ou en éco,
+            ou consigne écrasée par le programme du thermostat.
           </span>
         </div>
       )}
@@ -120,12 +125,12 @@ export default function Heating() {
           <div className="row between">
             <h2 className="h2">Chaudière · Nest</h2>
             <div className="row wrap" style={{ gap: 8 }}>
-              {pilotage?.on && <span className="badge warn">Piloté par HA</span>}
-              <span className="badge"><Sun /> Solaire {solar?.on ? "possible" : "non"}</span>
+              {piloteParHA && <span className="badge warn">Piloté par HA</span>}
+              <span className="badge"><Sun /> Solaire {solar?.on ? "possible · −1 °C" : "non"}</span>
             </div>
           </div>
           <div style={{ marginTop: 14 }}>
-            {nest ? <RoomDial room="Nest" climate={E.nest} color="#9085e9" disabled={Boolean(pilotage?.on)} disabledReason="Piloté par Home Assistant" /> : <div className="sub">Nest introuvable</div>}
+            {nest ? <RoomDial room="Nest" climate={E.nest} color="#9085e9" disabled={piloteParHA} disabledReason="Piloté par Home Assistant" /> : <div className="sub">Nest introuvable</div>}
           </div>
         </section>
       </div>

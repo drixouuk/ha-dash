@@ -7,15 +7,17 @@ import { Sheet } from "./Sheet";
 import { Spark } from "./Spark";
 import { PresenceBadge } from "./Presence";
 import { n1 } from "../util";
-import { COVERS } from "@config";
+import { COVERS, E } from "@config";
 
 const HVAC_LABEL: Record<string, string> = { off: "Arrêt", heat: "Chauffe", auto: "Auto", heat_cool: "Auto", cool: "Froid" };
 
 export function HvacModes({ climate }: { climate: string }) {
   const c = useEnt(climate);
   const call = useCall();
-  const modes = (c?.attrs.hvac_modes as string[] | undefined)?.filter((m) => HVAC_LABEL[m]) ?? [];
-  if (!c || !modes.length) return null;
+  // Si l'orchestration remet les pièces en chauffe (`E.keepRoomsOn`), « Arrêt » ne
+  // tiendrait pas : on le masque, et un sélecteur à un seul choix n'a plus lieu d'être.
+  const modes = (c?.attrs.hvac_modes as string[] | undefined)?.filter((m) => HVAC_LABEL[m] && !(E.keepRoomsOn && m === "off")) ?? [];
+  if (!c || modes.length < 2) return null;
   return (
     <div className="seg" role="group" aria-label="Mode de chauffage">
       {modes.map((m) => (

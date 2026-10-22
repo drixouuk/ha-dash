@@ -36,8 +36,11 @@ there *and* the matching block in the page that uses it.
 | 6 | Heating, per room | `ROOMS[].climate`, `.heating`, `.setpoint`, `.statDay`, `.statWeek` | replace |
 | 7 | Boiler / main thermostat | `src/config.local.ts` → `E.nest` | replace |
 | 7b | Switch meaning "Home Assistant drives the boiler" | `E.boilerControl` (optional) | replace / remove |
-| 8 | Comfort setpoints (eco, frost-free) | `E.setpoints` | replace / remove rows |
-| 9 | House modes (away, holidays, boiler control) | `E.modes` | replace / remove rows || 10 | Heat demand + rooms demanding heat | `E.heatDemand`, `E.heatRooms` | replace / remove |
+| 7c | "Summer mode" switch (boiler off, orchestration paused) | `E.summerMode` (optional) | replace / remove |
+| 7d | Hide the room "Off" button (orchestration turns rooms back on) | `E.keepRoomsOn` (optional) | keep / remove |
+| 8 | Setpoints (eco, frost-free, summer threshold) | `E.setpoints` | replace / remove rows |
+| 9 | House modes (away, holidays, summer, boiler control) | `E.modes` | replace / remove rows || 10 | Heat demand + rooms demanding heat | `E.heatDemand`, `E.heatRooms` | replace / remove |
+| 10b | Isometric floor plan with live devices (optional page) | `PLAN` | replace / remove |
 | 11 | Solar gain indicator | `E.solar` | replace / remove |
 | 12 | A light (kitchen/entrance card) | `E.light` | replace / remove |
 | 13 | Plant sensors (light + soil) | `E.plant` | replace / remove |
@@ -104,9 +107,20 @@ thermostat (boiler) and three house modes:
   every cycle, so the dashboard greys out the boiler dial instead of accepting a
   setting that would be overwritten immediately. Remove the field and the dial
   stays active at all times.
-- `E.setpoints` — the two helper `input_number`s used for eco and frost-free
-  temperatures. Replace the entity ids, or remove the rows.
-- `E.modes` — three `input_boolean`s (away, holidays, boiler control). Their
+- `E.summerMode` — optional. The `input_boolean` of a "summer mode" (boiler
+  switched off, rooms at frost-free, orchestration paused). While it is on, the
+  boiler dial is no longer greyed out, the header says the boiler is off and the
+  "the boiler is not following" alert stays quiet. Remove the field if you have
+  no such mode.
+- `E.keepRoomsOn` — optional. Set it to `true` when your automation puts room
+  thermostats back to `heat` by itself: the room "Arrêt" button would not hold,
+  so it is hidden (and the mode selector disappears if only one mode is left).
+  Rooms are then switched off through the summer or holidays mode.
+- `E.setpoints` — the helper `input_number`s used for eco and frost-free
+  temperatures (plus, in the example, the room temperature below which a
+  summer-mode automation suggests turning the boiler back on). Replace the
+  entity ids, or remove the rows.
+- `E.modes` — the house `input_boolean`s (away, holidays, summer, boiler control). Their
   labels and hints are free text: rename them to match your own automations.
   Add `banner: true` to the ones that should appear as a banner on the home page
   while they are on (typically away and holidays) — leave it out for the others.
@@ -116,6 +130,28 @@ thermostat (boiler) and three house modes:
 
 Nothing in the dashboard *automates* the heating: it reads and writes setpoints.
 Your Home Assistant automations stay in charge.
+
+### 10b. Floor plan (optional)
+
+`PLAN` draws the home as an isometric model (plain SVG, no 3D library) with one
+live marker per device; the **Plan** tab only appears when the field is set.
+
+- `outline` — the footprint of the home, walls included; `zones` — the inside
+  contour of each room. Points are `[x, y]` in **centimetres**, x to the right
+  and y downwards, as read on a 2D plan with its dimensions. Link a zone to a
+  room of `ROOMS` with `room` (tinted floor, live temperature, tap opens the
+  room sheet); mark a balcony or terrace with `outdoor: true`.
+- `devices` — `{ id, entity, kind, name, at }`. `kind` picks the icon and the
+  short value shown under the marker (`thermostat`, `trv`, `sensor`,
+  `presence`, `cover`, `contact`, `light`, `media`, `hub`, `plant`).
+- Placing devices: on the Plan page, **Placer les appareils** switches to a top
+  view where markers can be dragged; the page then gives the `devices` block to
+  paste back into `src/config.local.ts`. Dragged positions are only kept in
+  that browser until then.
+
+**Privacy:** like the rest of the configuration, the plan ends up in the
+published bundle, which `/config/www` serves without authentication. Leave
+`PLAN` out if the layout of your home must not be reachable that way.
 
 ### 11–13. Solar, light, plants
 

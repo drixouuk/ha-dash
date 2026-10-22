@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Captures des cinq pages en **mode démonstration** + contrôle des erreurs console.
+ * Captures des pages en **mode démonstration** + contrôle des erreurs console.
  *
  * Sert de garde-fou après un changement de dépendances : le mode mock ne dépend
  * pas de Home Assistant, un rendu cassé se voit donc immédiatement. Les captures
@@ -45,6 +45,7 @@ const TOUTES = [
   { chemin: "volets", nom: "volets" },
   { chemin: "climat", nom: "climat" },
   { chemin: "prieres", nom: "prieres" },
+  { chemin: "plan", nom: "plan" },
 ];
 const demandees = (option("pages", "") || "").split(",").map((p) => p.trim()).filter(Boolean);
 const PAGES = demandees.length ? TOUTES.filter((p) => demandees.includes(p.nom)) : TOUTES;

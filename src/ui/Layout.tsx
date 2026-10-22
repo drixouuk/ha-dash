@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useLiaison } from "@data";
 import { Sky } from "./Sky";
-import { Blinds, Flame, House, MoonStar, Thermometer, WifiOff } from "lucide-react";
+import { Blinds, Flame, House, MapIcon, MoonStar, Thermometer, WifiOff } from "lucide-react";
+import { PLAN } from "@config";
 
 const TABS = [
   { to: "/", label: "Accueil", Icon: House },
@@ -10,6 +11,8 @@ const TABS = [
   { to: "/volets", label: "Volets", Icon: Blinds },
   { to: "/climat", label: "Climat", Icon: Thermometer },
   { to: "/prieres", label: "Prières", Icon: MoonStar },
+  // La page Plan n'existe que si la configuration décrit un plan.
+  ...(PLAN ? [{ to: "/plan", label: "Plan", Icon: MapIcon }] : []),
 ];
 
 export function Layout() {

@@ -62,6 +62,13 @@ button { font: inherit; color: inherit; }
   .dock a { padding: 12px 4px 10px; }
 }
 
+/* ---------- Plan isométrique ---------- */
+.iso-plan { width: 100%; height: auto; max-height: 74vh; display: block; user-select: none; -webkit-user-select: none; }
+.iso-plan .tap-zone { cursor: pointer; }
+.iso-plan .tap-zone:hover polygon { stroke: rgba(255,255,255,.45); }
+.iso-plan .plan-dev:focus-visible { outline: none; }
+.iso-plan .plan-dev:focus-visible circle { stroke: var(--brass); stroke-width: 4; }
+
 /* ---------- Surfaces ---------- */
 .card {
   position: relative; border-radius: var(--r); padding: 18px;

@@ -5,6 +5,7 @@ import Heating from "./pages/Heating";
 import Shutters from "./pages/Shutters";
 import Climate from "./pages/Climate";
 import Prayers from "./pages/Prayers";
+import Plan from "./pages/Plan";
 
 // HashRouter : fonctionne tel quel depuis /local/dashboard/index.html, sans configuration serveur.
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="volets" element={<Shutters />} />
           <Route path="climat" element={<Climate />} />
           <Route path="prieres" element={<Prayers />} />
+          <Route path="plan" element={<Plan />} />
         </Route>
       </Routes>
     </HashRouter>
