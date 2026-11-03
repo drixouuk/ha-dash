@@ -1,28 +1,13 @@
-import { AlertTriangle, Flame, Minus, Plus, Sun } from "lucide-react";
+import { AlertTriangle, Flame, Settings2, Sun } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useCall, useEnt, useHist } from "@data";
-import { E, ROOMS } from "@config";
+import { E, ROOMS, SETTINGS } from "@config";
 import { dureeEtatFinal, fmtDuration, n1 } from "../util";
 import { HvacModes, RoomDial } from "../ui/RoomSheet";
 import { PresenceBadge } from "../ui/Presence";
 import { Timeline } from "../ui/Charts";
-
-function Stepper({ entity, name }: { entity: string; name: string }) {
-  const e = useEnt(entity);
-  const call = useCall();
-  if (!e) return null;
-  const step = Number(e.attrs.step ?? 0.5), min = Number(e.attrs.min ?? 5), max = Number(e.attrs.max ?? 30);
-  const set = (v: number) => call("input_number", "set_value", { value: Math.min(max, Math.max(min, v)) }, entity);
-  return (
-    <div className="row between" style={{ padding: "8px 0" }}>
-      <span style={{ fontWeight: 600 }}>{name}</span>
-      <div className="row" style={{ gap: 10 }}>
-        <button className="icon-btn" style={{ width: 38, height: 38 }} onClick={() => set((e.num ?? min) - step)} aria-label={`Baisser ${name}`}><Minus /></button>
-        <span className="num" style={{ fontSize: 22, minWidth: 64, textAlign: "center" }}>{n1(e.num)}°</span>
-        <button className="icon-btn" style={{ width: 38, height: 38 }} onClick={() => set((e.num ?? min) + step)} aria-label={`Monter ${name}`}><Plus /></button>
-      </div>
-    </div>
-  );
-}
+import { Derogation } from "../ui/Derogation";
+import { Stepper } from "../ui/Stepper";
 
 function ModeSwitch({ entity, name, hint }: { entity: string; name: string; hint: string }) {
   const e = useEnt(entity);
@@ -49,6 +34,7 @@ function RoomHeat({ i }: { i: number }) {
         </div>
       </div>
       <RoomDial room={room.name} climate={room.climate} color={room.color} />
+      <Derogation entity={room.derogation} compact />
       <div style={{ display: "grid", justifyItems: "center", marginTop: 12 }}><HvacModes climate={room.climate} /></div>
     </div>
   );
@@ -95,7 +81,10 @@ export default function Heating() {
     <>
       <header className="head-page">
         <div><div className="eyebrow">Le Nest produit · les têtes demandent · HA orchestre</div><h1 className="h1">Chauffage</h1></div>
-        {enEte ? <span className="badge" style={{ fontSize: 14, padding: "8px 14px" }}><Sun /> Mode été · chaudière éteinte</span> : demand?.on ? <span className="badge heat" style={{ fontSize: 14, padding: "8px 14px" }}><Flame /> Chaudière en demande · {rooms?.state ?? 0} pièce(s)</span> : <span className="badge" style={{ fontSize: 14, padding: "8px 14px" }}>Chaudière au repos</span>}
+        <div className="row wrap" style={{ gap: 8 }}>
+          {enEte ? <span className="badge" style={{ fontSize: 14, padding: "8px 14px" }}><Sun /> Mode été · chaudière éteinte</span> : demand?.on ? <span className="badge heat" style={{ fontSize: 14, padding: "8px 14px" }}><Flame /> Chaudière en demande · {rooms?.state ?? 0} pièce(s)</span> : <span className="badge" style={{ fontSize: 14, padding: "8px 14px" }}>Chaudière au repos</span>}
+          {SETTINGS && <Link className="chip" to="/reglages"><Settings2 /> Réglages</Link>}
+        </div>
       </header>
 
       {chaudiereMuette && (
@@ -119,7 +108,7 @@ export default function Heating() {
           {E.modes.map((m) => <ModeSwitch key={m.entity} entity={m.entity} name={m.name} hint={m.hint} />)}
           <div style={{ height: 1, background: "var(--line)", margin: "10px 0" }} />
           <div className="eyebrow">Températures de référence</div>
-          {E.setpoints.map((s) => <Stepper key={s.entity} entity={s.entity} name={s.name} />)}
+          {E.setpoints.map((s) => <Stepper key={s.entity} entity={s.entity} name={s.name} unit="°C" />)}
         </section>
         <section className="card">
           <div className="row between">

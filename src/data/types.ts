@@ -17,6 +17,23 @@ export interface Point {
   s: string; // état brut
 }
 
+/** Jours d'une plage hebdomadaire, dans l'ordre de Home Assistant. */
+export const JOURS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
+export type Jour = (typeof JOURS)[number];
+/** Créneau d'une plage : heures « HH:MM:SS », `to` peut valoir « 24:00:00 ». */
+export type Creneau = { from: string; to: string };
+export type Semaine = Record<Jour, Creneau[]>;
+
+/**
+ * Plage hebdomadaire d'une entité `schedule` : `semaine` est null tant qu'elle
+ * n'est pas lue ; `enregistrer` remplace toute la semaine (compte administrateur).
+ */
+export interface Plages {
+  semaine: Semaine | null;
+  erreur: string | null;
+  enregistrer: (semaine: Semaine) => Promise<void>;
+}
+
 export type Call = (domain: string, service: string, data?: Record<string, unknown>, entityId?: string | string[]) => void;
 
 /**

@@ -26,6 +26,38 @@ export type Room = {
   statDay: string;
   statWeek: string;
   setpoint: string;
+  /** Plages de confort de la pièce (`schedule.*`, facultatif) : éditées dans la page Réglages. */
+  schedule?: string;
+  /**
+   * Identifiant de stockage de cette plage, s'il diffère de l'entité (c'est
+   * l'`unique_id` du registre d'entités). Sans lui, le dashboard le retrouve seul.
+   */
+  scheduleId?: string;
+  /** Minuteur de réglage manuel de la pièce (`timer.*`, facultatif) : actif = dérogation en cours. */
+  derogation?: string;
+};
+
+/**
+ * Un réglage de la page Réglages : un `input_number`, `input_boolean` ou
+ * `input_datetime` (heure seule) de Home Assistant. Les bornes de l'entité
+ * priment ; celles d'ici servent de repli et au mode démo.
+ */
+export type Setting = {
+  entity: string;
+  name: string;
+  hint?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+};
+
+/** Un groupe de réglages ; `schedules: true` y place l'éditeur de plages des pièces. */
+export type SettingsGroup = {
+  title: string;
+  hint?: string;
+  items?: readonly Setting[];
+  schedules?: boolean;
 };
 
 export type PrayerSlot = {
@@ -130,6 +162,12 @@ export type MaisonConfig = {
   OUTSIDE: { name: string; color: string; temp: string; hum: string };
   COVERS: readonly { id: string; name: string; room: string }[];
   /**
+   * Page Réglages (facultatif) : les réglages exposés par vos automatisations,
+   * par groupe. `constants` liste, en lecture seule dans une section repliée,
+   * les valeurs techniques volontairement non modifiables depuis le dashboard.
+   */
+  SETTINGS?: { groups: readonly SettingsGroup[]; constants?: readonly { label: string; value: string }[] };
+  /**
    * Plan isométrique du logement avec ses appareils (facultatif) : sans ce
    * champ, la page « Plan » n'apparaît pas. Attention, le plan finit dans le
    * bundle publié, servi sans authentification (voir docs/ADAPTER.md).
@@ -191,6 +229,7 @@ export const CONFIG: MaisonConfig = {
       presence: "binary_sensor.salon_presence",
       statDay: "sensor.salon_chauffe_aujourd_hui", statWeek: "sensor.salon_chauffe_7_jours",
       setpoint: "input_number.consigne_salon",
+      schedule: "schedule.chauffage_salon", derogation: "timer.derogation_salon",
     },
     {
       id: "chambre", name: "Chambre", icon: "bed", color: "#3987e5",
@@ -201,6 +240,7 @@ export const CONFIG: MaisonConfig = {
       presence: "binary_sensor.chambre_presence",
       statDay: "sensor.chambre_chauffe_aujourd_hui", statWeek: "sensor.chambre_chauffe_7_jours",
       setpoint: "input_number.consigne_chambre",
+      schedule: "schedule.chauffage_chambre", derogation: "timer.derogation_chambre",
     },
     {
       id: "bureau", name: "Bureau", icon: "desk", color: "#199e70",
@@ -211,6 +251,7 @@ export const CONFIG: MaisonConfig = {
       presence: "binary_sensor.bureau_presence",
       statDay: "sensor.bureau_chauffe_aujourd_hui", statWeek: "sensor.bureau_chauffe_7_jours",
       setpoint: "input_number.consigne_bureau",
+      schedule: "schedule.chauffage_bureau", derogation: "timer.derogation_bureau",
     },
   ],
 
@@ -225,6 +266,41 @@ export const CONFIG: MaisonConfig = {
     { id: "cover.chambre", name: "Chambre", room: "chambre" },
     { id: "cover.bureau", name: "Bureau", room: "bureau" },
   ],
+
+  SETTINGS: {
+    groups: [
+      {
+        title: "Modes",
+        items: [
+          { entity: "input_boolean.chauffage_ete", name: "Mode été", hint: "Chaudière éteinte, pièces en hors-gel." },
+          { entity: "input_boolean.chauffage_vacances", name: "Vacances", hint: "Hors-gel partout." },
+          { entity: "input_boolean.chauffage_absence", name: "Absence", hint: "Éco partout." },
+        ],
+      },
+      { title: "Plages", hint: "Hors plage, la pièce passe en éco.", schedules: true },
+      {
+        title: "Consignes",
+        items: [
+          { entity: "input_number.consigne_salon", name: "Confort salon", min: 15, max: 24, step: 0.5, unit: "°C" },
+          { entity: "input_number.consigne_chambre", name: "Confort chambre", min: 15, max: 24, step: 0.5, unit: "°C" },
+          { entity: "input_number.consigne_bureau", name: "Confort bureau", min: 15, max: 24, step: 0.5, unit: "°C" },
+          { entity: "input_number.consigne_eco", name: "Éco", hint: "Hors plage, pièce vide, absence.", min: 10, max: 20, step: 0.5, unit: "°C" },
+          { entity: "input_number.consigne_hors_gel", name: "Hors-gel", min: 5, max: 12, step: 0.5, unit: "°C" },
+        ],
+      },
+      {
+        title: "Présence",
+        items: [
+          { entity: "input_number.delai_piece_vide", name: "Pièce vide → éco", hint: "Délai sans présence pendant une plage.", min: 5, max: 120, step: 5, unit: "min" },
+          { entity: "input_datetime.teletravail_debut", name: "Télétravail : début" },
+          { entity: "input_datetime.teletravail_fin", name: "Télétravail : fin" },
+        ],
+      },
+    ],
+    constants: [
+      { label: "Anti-cyclage chaudière", value: "5 min de marche, 5 min d'arrêt minimum" },
+    ],
+  },
 
   // Plan fictif : contours en cm, murs de 10 cm entre les pièces.
   PLAN: {
@@ -312,4 +388,4 @@ export const CONFIG: MaisonConfig = {
   },
 };
 
-export const { USER_NAME, CITY, ROOMS, OUTSIDE, COVERS, PLAN, E } = CONFIG;
+export const { USER_NAME, CITY, ROOMS, OUTSIDE, COVERS, PLAN, SETTINGS, E } = CONFIG;

@@ -46,6 +46,7 @@ const TOUTES = [
   { chemin: "climat", nom: "climat" },
   { chemin: "prieres", nom: "prieres" },
   { chemin: "plan", nom: "plan" },
+  { chemin: "reglages", nom: "reglages" },
 ];
 const demandees = (option("pages", "") || "").split(",").map((p) => p.trim()).filter(Boolean);
 const PAGES = demandees.length ? TOUTES.filter((p) => demandees.includes(p.nom)) : TOUTES;

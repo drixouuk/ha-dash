@@ -62,6 +62,59 @@ button { font: inherit; color: inherit; }
   .dock a { padding: 12px 4px 10px; }
 }
 
+/* ---------- Réglages ---------- */
+.reglages { columns: 2 400px; column-gap: 14px; }
+.reglages > .reglages-groupe { break-inside: avoid; margin-bottom: 14px; display: block; }
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid var(--line); }
+.setting:first-child { border-top: 0; }
+.setting-txt { min-width: 0; }
+.setting-nom { font-weight: 700; }
+.setting-aide { font-size: 12.5px; margin-top: 2px; }
+.icon-btn:disabled, .chip:disabled, .switch:disabled { opacity: .4; cursor: default; }
+.champ-heure { background: rgba(0,0,0,.28); border: 1px solid var(--line); border-radius: 12px; color: var(--text); padding: 8px 10px;
+  font: 600 15px var(--body); font-variant-numeric: tabular-nums; color-scheme: dark; min-height: 40px; }
+.champ-heure:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.reglages-avance summary { cursor: pointer; list-style: none; }
+.reglages-avance summary::-webkit-details-marker { display: none; }
+.reglages-avance summary::before { content: "▸ "; color: var(--faint); }
+.reglages-avance[open] summary::before { content: "▾ "; }
+/* dérogation : réglage manuel en cours */
+.derog { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 8px 8px 12px; border-radius: 14px;
+  background: rgba(242,180,65,.1); border: 1px solid rgba(242,180,65,.28); color: #ffe2a3; font-weight: 600; font-size: 13px; }
+.derog > svg { width: 16px; height: 16px; flex: none; }
+.derog > span { flex: 1; min-width: 0; }
+.derog-x { display: inline-flex; align-items: center; gap: 4px; border: 0; border-radius: 99px; padding: 6px 10px; cursor: pointer;
+  background: rgba(255,255,255,.1); color: var(--text); font: 700 12px var(--body); white-space: nowrap; }
+.derog-x svg { width: 13px; height: 13px; }
+.derog.compact { font-size: 12.5px; }
+/* plages hebdomadaires */
+.plage-tete { cursor: default; padding-top: 0; padding-bottom: 0; }
+.plage-tete:hover { background: transparent; }
+.plage-echelle { position: relative; height: 14px; font-size: 10.5px; font-weight: 700; }
+.plage-echelle span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.plage-echelle span:first-child { transform: none; }
+.plage-echelle span:last-child { transform: translateX(-100%); }
+.plage-jour { border-radius: 14px; }
+.plage-jour.ouvert { background: rgba(255,255,255,.04); }
+.plage-ligne { display: grid; grid-template-columns: 44px minmax(120px, 1fr) minmax(0, 1.1fr); align-items: center; gap: 12px; width: 100%;
+  padding: 8px 10px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; border-radius: 14px; }
+.plage-ligne:hover { background: rgba(255,255,255,.04); }
+.plage-nom { font-weight: 700; font-size: 13px; color: var(--muted); }
+.plage-nom.auj { color: var(--brass); }
+.plage-resume { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plage-piste { position: relative; height: 14px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; }
+.plage-piste b { position: absolute; top: 0; bottom: 0; background: var(--ember); border-radius: 99px; opacity: .9; }
+.plage-graduation { position: absolute; top: 3px; bottom: 3px; width: 1px; background: rgba(255,255,255,.12); }
+.plage-maintenant { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--brass); box-shadow: 0 0 6px var(--brass); }
+.plage-edition { display: grid; gap: 10px; padding: 4px 10px 14px 66px; }
+.plage-erreur { color: #ffb3b3; font-size: 13px; font-weight: 600; }
+@media (max-width: 640px) {
+  .plage-ligne { grid-template-columns: 38px 1fr; }
+  .plage-resume { grid-column: 2; }
+  .plage-edition { padding-left: 10px; }
+  .plage-tete { display: none; }
+}
+
 /* ---------- Plan isométrique ---------- */
 .iso-plan { width: 100%; height: auto; max-height: 74vh; display: block; user-select: none; -webkit-user-select: none; }
 .iso-plan .tap-zone { cursor: pointer; }
@@ -120,6 +173,7 @@ button { font: inherit; color: inherit; }
   white-space: nowrap;
 }
 .chip svg { width: 17px; height: 17px; stroke-width: 2; }
+a.chip { color: inherit; text-decoration: none; }
 .chip:hover { background: rgba(255,255,255,.09); }
 .chip.on { background: var(--brass); color: var(--ink); border-color: transparent; }
 .seg { display: inline-flex; padding: 4px; border-radius: 999px; background: rgba(0,0,0,.28); border: 1px solid var(--line); gap: 2px; }

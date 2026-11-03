@@ -1,6 +1,7 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Settings2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useCall } from "@data";
-import { COVERS, ROOMS } from "@config";
+import { COVERS, ROOMS, SETTINGS } from "@config";
 import { Shutter } from "../ui/Shutter";
 
 export default function Shutters() {
@@ -13,6 +14,7 @@ export default function Shutters() {
         <div className="row" style={{ gap: 8 }}>
           <button className="chip" onClick={() => call("cover", "open_cover", {}, ids)}><ArrowUp /> Tout ouvrir</button>
           <button className="chip" onClick={() => call("cover", "close_cover", {}, ids)}><ArrowDown /> Tout fermer</button>
+          {SETTINGS && <Link className="chip" to="/reglages" aria-label="Réglages des volets"><Settings2 /></Link>}
         </div>
       </header>
       <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>

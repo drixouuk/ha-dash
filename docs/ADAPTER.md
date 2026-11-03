@@ -40,6 +40,7 @@ there *and* the matching block in the page that uses it.
 | 7d | Hide the room "Off" button (orchestration turns rooms back on) | `E.keepRoomsOn` (optional) | keep / remove |
 | 8 | Setpoints (eco, frost-free, summer threshold) | `E.setpoints` | replace / remove rows |
 | 9 | House modes (away, holidays, summer, boiler control) | `E.modes` | replace / remove rows || 10 | Heat demand + rooms demanding heat | `E.heatDemand`, `E.heatRooms` | replace / remove |
+| 10c | Settings page: every setting your automations expose, room schedules, manual-override timers | `SETTINGS`, `ROOMS[].schedule`, `.scheduleId`, `.derogation` | replace / remove |
 | 10b | Isometric floor plan with live devices (optional page) | `PLAN` | replace / remove |
 | 11 | Solar gain indicator | `E.solar` | replace / remove |
 | 12 | A light (kitchen/entrance card) | `E.light` | replace / remove |
@@ -130,6 +131,30 @@ thermostat (boiler) and three house modes:
 
 Nothing in the dashboard *automates* the heating: it reads and writes setpoints.
 Your Home Assistant automations stay in charge.
+
+### 10c. Settings (optional)
+
+`SETTINGS` adds a **Réglages** page (gear button on Chauffage and Volets). The
+dashboard only reads and writes these entities: your automations keep the logic
+and re-read the values each time they run.
+
+- `groups` — `{ title, hint?, items? }` in display order. Each item is
+  `{ entity, name, hint?, min?, max?, step?, unit? }`: an `input_number`
+  (stepper), `input_boolean` (switch) or time-only `input_datetime` (time
+  field, written as `HH:MM:SS`). The entity's own bounds win; the ones given
+  here are a fallback and feed the demo mode.
+- A group with `schedules: true` holds the weekly schedule editor of the rooms
+  that have `ROOMS[].schedule` (`schedule.*`). It reads with `schedule/list`
+  and writes the whole week with `schedule/update`, which Home Assistant
+  reserves to **administrators**: a non-admin account (wall tablet) sees the
+  schedules read-only. Set `scheduleId` when the storage id differs from the
+  entity (it is the entity's `unique_id` in the entity registry); otherwise the
+  dashboard looks it up.
+- `constants` — `{ label, value }` shown read-only in a folded « Avancé »
+  section, for technical values that must not be changed from the dashboard.
+- `ROOMS[].derogation` — the `timer.*` that runs while a manual setting
+  overrides the schedule. While it is active, the room card and room sheet say
+  « Réglage manuel jusqu'à HH:MM » with a button that cancels it (`timer.cancel`).
 
 ### 10b. Floor plan (optional)
 

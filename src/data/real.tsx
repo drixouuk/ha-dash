@@ -19,7 +19,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { toEnt, type Call, type Ent, type Liaison, type Point } from "./types";
+import { JOURS, toEnt, type Call, type Creneau, type Ent, type Liaison, type Plages, type Point, type Semaine } from "./types";
 
 /* ------------------------------------------------------------------ réglages */
 
@@ -242,6 +242,97 @@ export function useCall(): Call {
     },
     [conn],
   );
+}
+
+/* ------------------------------------------------------------ compte et plages */
+
+let admin: Promise<boolean> | null = null;
+
+/**
+ * Le compte connecté est-il administrateur ? Les plages (`schedule/update`)
+ * l'exigent : un compte de kiosque les voit en lecture seule. `null` tant que
+ * la réponse n'est pas arrivée.
+ */
+export function useAdmin(): boolean | null {
+  const { conn } = useConnexion();
+  const [valeur, setValeur] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!conn) return;
+    let vivant = true;
+    admin ??= conn
+      .sendMessagePromise<{ is_admin?: boolean }>({ type: "auth/current_user" })
+      .then((u) => Boolean(u?.is_admin))
+      .catch(() => false);
+    void admin.then((v) => vivant && setValeur(v));
+    return () => {
+      vivant = false;
+    };
+  }, [conn]);
+  return valeur;
+}
+
+type ElementPlage = { id: string; name: string; icon?: string } & Partial<Record<(typeof JOURS)[number], (Creneau & Record<string, unknown>)[]>>;
+
+/**
+ * Retrouve l'élément de stockage d'une entité `schedule` : identifiant fourni par
+ * la configuration, sinon `unique_id` du registre (compte administrateur), sinon
+ * le nom affiché de l'entité.
+ */
+async function retrouverPlage(conn: ConnexionHA, entity: string, id?: string): Promise<ElementPlage> {
+  const liste = await conn.sendMessagePromise<ElementPlage[]>({ type: "schedule/list" });
+  if (id) {
+    const trouve = liste.find((e) => e.id === id);
+    if (trouve) return trouve;
+  }
+  try {
+    const reg = await conn.sendMessagePromise<{ unique_id?: string }>({ type: "config/entity_registry/get", entity_id: entity });
+    const trouve = liste.find((e) => e.id === reg?.unique_id);
+    if (trouve) return trouve;
+  } catch {
+    // registre réservé aux administrateurs : on passe au nom affiché
+  }
+  const nom = entites[entity]?.attributes?.friendly_name;
+  const trouve = liste.find((e) => e.id === entity.split(".")[1] || (nom && e.name === nom));
+  if (!trouve) throw new Error(`Plage introuvable pour ${entity}`);
+  return trouve;
+}
+
+const semaineDe = (e: ElementPlage): Semaine =>
+  Object.fromEntries(JOURS.map((j) => [j, (e[j] ?? []).map(({ from, to }) => ({ from, to }))])) as Semaine;
+
+/**
+ * Plage hebdomadaire d'une entité `schedule`, lue par `schedule/list` (permis à
+ * tout compte) et réécrite d'un bloc par `schedule/update` (administrateur).
+ */
+export function usePlages(entity: string, id?: string): Plages {
+  const { conn } = useConnexion();
+  const [element, setElement] = useState<ElementPlage | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!conn || !entity) return;
+    let vivant = true;
+    setElement(null);
+    setErreur(null);
+    retrouverPlage(conn, entity, id)
+      .then((e) => vivant && setElement(e))
+      .catch((e: unknown) => vivant && setErreur(messageErreur(e)));
+    return () => {
+      vivant = false;
+    };
+  }, [conn, entity, id]);
+
+  const enregistrer = useCallback(
+    async (semaine: Semaine) => {
+      if (!conn || !element) throw new Error("Plage non chargée");
+      const { id: schedule_id, name, icon } = element;
+      const maj = await conn.sendMessagePromise<ElementPlage>({ type: "schedule/update", schedule_id, name, icon, ...semaine });
+      setElement(maj ?? { ...element, ...semaine });
+    },
+    [conn, element],
+  );
+
+  return { semaine: element ? semaineDe(element) : null, erreur, enregistrer };
 }
 
 /* ----------------------------------------------------------------- historique */

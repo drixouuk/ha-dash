@@ -1,6 +1,6 @@
-import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { COVERS, E, OUTSIDE, PLAN, ROOMS } from "@config";
-import { toEnt, type Call, type Ent, type Liaison, type Point } from "./types";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { COVERS, E, OUTSIDE, PLAN, ROOMS, SETTINGS } from "@config";
+import { JOURS, toEnt, type Call, type Ent, type Liaison, type Plages, type Point, type Semaine } from "./types";
 
 /**
  * Mode démo : mêmes hooks que real.tsx, mais sur des données simulées (sert aux
@@ -104,6 +104,34 @@ for (const d of PLAN?.devices ?? []) if (!store[d.entity]) store[d.entity] = PAR
 // Soleil du milieu de matinée, pour que la démo 3D montre la lumière entrer par les fenêtres.
 if (PLAN?.sun && !store[PLAN.sun]) store[PLAN.sun] = { state: "above_horizon", attrs: { azimuth: 112, elevation: 24 } };
 
+/**
+ * Réglages de la page Réglages : une valeur plausible par entité, au milieu de
+ * ses bornes (arrondie au pas) pour un nombre, heures typiques pour une heure.
+ */
+const HEURES_DEMO = ["08:30:00", "22:30:00", "09:00:00", "21:00:00"];
+let heure = 0;
+for (const r of SETTINGS?.groups.flatMap((g) => g.items ?? []) ?? []) {
+  if (store[r.entity]) continue;
+  const domaine = r.entity.split(".")[0];
+  if (domaine === "input_boolean") store[r.entity] = { state: r.entity.includes("pilotage") || r.entity.includes("preserver") ? "on" : "off", attrs: {} };
+  else if (domaine === "input_datetime") store[r.entity] = { state: HEURES_DEMO[heure++ % HEURES_DEMO.length], attrs: { has_date: false, has_time: true } };
+  else {
+    const min = r.min ?? 0, max = r.max ?? 100, pas = r.step ?? 1;
+    const milieu = Math.round((min + max) / 2 / pas) * pas;
+    store[r.entity] = { state: String(milieu), attrs: { min, max, step: pas, unit_of_measurement: r.unit } };
+  }
+}
+
+/** Dérogations : la première pièce est en réglage manuel encore 47 minutes, les autres non. */
+const enDerogation = (minutes: number): S => ({
+  state: "active",
+  attrs: { duration: "1:00:00", finishes_at: new Date(Date.now() + minutes * 60_000).toISOString() },
+});
+ROOMS.forEach((r, i) => {
+  if (r.derogation && !store[r.derogation]) store[r.derogation] = i === 0 ? enDerogation(47) : { state: "idle", attrs: { duration: "1:00:00" } };
+  if (r.schedule && !store[r.schedule]) store[r.schedule] = { state: i === 0 ? "on" : "off", attrs: {} };
+});
+
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => (listeners.add(l), () => void listeners.delete(l));
@@ -162,7 +190,17 @@ export function useCall(): Call {
       else if (service === "open_cover") moveCover(id, 100);
       else if (service === "close_cover") moveCover(id, 0);
       else if (service === "stop_cover") clearInterval(timers.get(id));
-      else if (service === "set_temperature") patch(id, undefined, { temperature: data.temperature });
+      else if (service === "set_temperature") {
+        patch(id, undefined, { temperature: data.temperature });
+        // Comme l'automatisation réelle : un réglage manuel d'une pièce ouvre une dérogation.
+        const piece = ROOMS.find((r) => r.climate === id);
+        if (piece?.derogation && store[piece.derogation]) {
+          store[piece.derogation] = enDerogation(60);
+          emit();
+        }
+      }
+      else if (service === "cancel" || service === "finish") patch(id, "idle", { finishes_at: undefined });
+      else if (service === "set_datetime") patch(id, String(data.time));
       else if (service === "set_hvac_mode") patch(id, String(data.hvac_mode));
       else if (service === "set_value") patch(id, String(data.value));
       else if (service === "toggle") patch(id, store[id].state === "on" ? "off" : "on");
@@ -171,6 +209,36 @@ export function useCall(): Call {
     }
     void domain;
   };
+}
+
+/** Mode démo : administrateur, sauf avec `?kiosque` dans l'adresse (lecture seule des plages). */
+export function useAdmin(): boolean | null {
+  return !new URLSearchParams(window.location.search).has("kiosque");
+}
+
+/** Plages typiques : semaine tôt le matin et le soir, week-end en continu. */
+const plagesDemo = new Map<string, Semaine>();
+function semaineType(i: number): Semaine {
+  const ouvre = i === 0 ? [{ from: "06:00:00", to: "08:30:00" }, { from: "17:30:00", to: "22:30:00" }]
+    : i === 1 ? [{ from: "06:30:00", to: "07:30:00" }, { from: "21:00:00", to: "23:00:00" }]
+      : [{ from: "08:30:00", to: "12:30:00" }, { from: "13:30:00", to: "18:30:00" }];
+  const repos = i === 1 ? [{ from: "08:30:00", to: "10:00:00" }, { from: "21:00:00", to: "23:30:00" }] : [{ from: "08:00:00", to: "23:00:00" }];
+  return Object.fromEntries(JOURS.map((j, n) => [j, n < 5 ? ouvre : repos])) as Semaine;
+}
+
+export function usePlages(entity: string): Plages {
+  const [semaine, setSemaine] = useState<Semaine | null>(null);
+  useEffect(() => {
+    if (!plagesDemo.has(entity)) plagesDemo.set(entity, semaineType(Math.max(0, ROOMS.findIndex((r) => r.schedule === entity))));
+    const t = window.setTimeout(() => setSemaine(plagesDemo.get(entity) ?? null), 150); // latence d'un aller-retour
+    return () => window.clearTimeout(t);
+  }, [entity]);
+  const enregistrer = useCallback(async (s: Semaine) => {
+    await new Promise((r) => window.setTimeout(r, 250));
+    plagesDemo.set(entity, s);
+    setSemaine(s);
+  }, [entity]);
+  return { semaine, erreur: null, enregistrer };
 }
 
 // --- historique simulé, déterministe ---

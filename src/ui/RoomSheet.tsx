@@ -6,6 +6,7 @@ import { Shutter } from "./Shutter";
 import { Sheet } from "./Sheet";
 import { Spark } from "./Spark";
 import { PresenceBadge } from "./Presence";
+import { Derogation } from "./Derogation";
 import { n1 } from "../util";
 import { COVERS, E } from "@config";
 
@@ -67,6 +68,7 @@ function RoomSheetInner({ room, onClose }: { room: Room; onClose: () => void }) 
           </div>
         </div>
         <RoomDial room={room.name} climate={room.climate} color={room.color} />
+        <Derogation entity={room.derogation} />
         <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div className="card" style={{ padding: 14 }}>
             <div className="eyebrow">Température 24 h</div>

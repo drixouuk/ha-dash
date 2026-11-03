@@ -7,7 +7,8 @@ first: it is the entry point for adapting the dashboard to a home.
 
 A React + TypeScript single-page dashboard for **Home Assistant**, built with
 Vite. Five pages — Accueil, Chauffage, Volets, Climat, Prières — plus an
-optional Plan page (isometric floor plan, when `PLAN` is configured) share one
+optional Plan page (floor plan, when `PLAN` is configured) and Réglages page
+(settings, when `SETTINGS` is configured) share one
 design system. Built output is a plain static folder (`dist/`) that Home
 Assistant serves from `/config/www/`, either as a sidebar panel or inside an
 iframe card.
@@ -34,7 +35,8 @@ Assistant client), plain CSS. No UI framework, no CSS-in-JS, no state library.
 
 - **`@data`** → `src/data/real.tsx` normally, `src/data/mock.tsx` with `--mode
   mock`. Both export exactly the same API: `Connection`, `useEnt(id)`,
-  `useCall()`, `useHist(ids, hours)`. Pages and UI components must never import
+  `useCall()`, `useHist(ids, hours)`, `useAdmin()` (is the account an
+  administrator) and `usePlages(entity, id?)` (read / write a weekly `schedule`). Pages and UI components must never import
   `home-assistant-js-websocket` (or any Home Assistant library) directly: they
   import `@data` and `src/data/types.ts` only.
 - **`@config`** → `src/config.local.ts` if that file exists, otherwise
